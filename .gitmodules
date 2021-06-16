@@ -1,0 +1,12 @@
+[submodule "Newtonsoft.Json"]
+	path = Newtonsoft.Json
+	url = https://github.com/H3VR-Modding/Newtonsoft.Json
+[submodule "Stratum"]
+	path = Stratum
+	url = https://github.com/H3VR-Modding/Stratum
+[submodule "submodules/Stratum"]
+	path = submodules/Stratum
+	url = https://github.com/H3VR-Modding/Stratum
+[submodule "submodules/Newtonsoft.Json"]
+	path = submodules/Newtonsoft.Json
+	url = https://github.com/H3VR-Modding/Newtonsoft.Json

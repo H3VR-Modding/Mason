@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <OutputType>Exe</OutputType>
+      <TargetFramework>net5.0</TargetFramework>
+      <Nullable>enable</Nullable>
+      <AssemblyName>mason</AssemblyName>
+
+      <PackAsTool>true</PackAsTool>
+      <PackageOutputPath>./nupkg</PackageOutputPath>
+
+      <Authors>Stratum Team</Authors>
+      <PackageLicenseExpression>MIT</PackageLicenseExpression>
+      <PackageProjectUrl>https://github.com/H3VR-Modding/Mason</PackageProjectUrl>
+      <RepositoryUrl>https://github.com/H3VR-Modding/Mason.git</RepositoryUrl>
+      <RepositoryType>git</RepositoryType>
+      <Description>Compiles project files into a BepInEx plugin that utilizes Stratum asset loading.</Description>
+      <PackageTags>compiler bepinex stratum plugin cil tool</PackageTags>
+
+      <PackageVersion>1.0.0</PackageVersion>
+      <AssemblyVersion>1.0.0</AssemblyVersion>
+      <FileVersion>1.0.0</FileVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Mason.Core\Mason.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    </ItemGroup>
+
+</Project>

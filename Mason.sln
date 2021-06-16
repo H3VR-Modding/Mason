@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mason.Patcher", "Mason.Patcher\Mason.Patcher.csproj", "{7D24EB23-8B90-4A1E-A9F2-7E1AFE33E4BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mason.Core", "Mason.Core\Mason.Core.csproj", "{8470B9D2-D7DC-4440-9D7E-B3BFA10A16B7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json", "submodules\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.csproj", "{18A5ACF1-40F2-4E3A-9EFA-362404BCF9F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mason", "Mason\Mason.csproj", "{7D711F6B-CA6F-4E58-AE6D-27904C6674AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D24EB23-8B90-4A1E-A9F2-7E1AFE33E4BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D24EB23-8B90-4A1E-A9F2-7E1AFE33E4BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D24EB23-8B90-4A1E-A9F2-7E1AFE33E4BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D24EB23-8B90-4A1E-A9F2-7E1AFE33E4BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8470B9D2-D7DC-4440-9D7E-B3BFA10A16B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8470B9D2-D7DC-4440-9D7E-B3BFA10A16B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8470B9D2-D7DC-4440-9D7E-B3BFA10A16B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8470B9D2-D7DC-4440-9D7E-B3BFA10A16B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18A5ACF1-40F2-4E3A-9EFA-362404BCF9F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18A5ACF1-40F2-4E3A-9EFA-362404BCF9F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18A5ACF1-40F2-4E3A-9EFA-362404BCF9F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18A5ACF1-40F2-4E3A-9EFA-362404BCF9F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D711F6B-CA6F-4E58-AE6D-27904C6674AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D711F6B-CA6F-4E58-AE6D-27904C6674AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D711F6B-CA6F-4E58-AE6D-27904C6674AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D711F6B-CA6F-4E58-AE6D-27904C6674AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,340 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/H3VR-Modding/Mason/v1.0.0/schemas/project/root.json",
+  "type": "object",
+  "title": "Mason Project",
+  "description": "A Mason project",
+  "examples": [
+    {
+      "version": 1,
+      "dependencies": {
+        "hard": {
+          "ExampleHardDependency": "1.2.3"
+        },
+        "soft": [
+          "ExampleSoftDependency"
+        ]
+      },
+      "assets": {
+        "setup": [
+          {
+            "path" : "setup/*",
+            "plugin": "ExamplePlugin",
+            "loader": "ExampleLoader"
+          }
+        ],
+        "runtime": {
+          "name": "Root",
+          "assets": [
+            {
+              "path" : "runtime/unordered/*",
+              "plugin": "ExamplePlugin",
+              "loader": "ExampleLoader"
+            }
+          ],
+          "pipelines": [
+            {
+              "name": "Ordered",
+              "sequential": true,
+              "assets": [
+                {
+                  "path" : "runtime/ordered/first",
+                  "plugin": "ExamplePlugin",
+                  "loader": "ExampleLoader"
+                },
+                {
+                  "path" : "runtime/ordered/second",
+                  "plugin": "ExamplePlugin",
+                  "loader": "ExampleLoader"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "required": [
+    "version",
+    "assets"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "title": "Version",
+      "description": "The version of Mason project to use when compiling",
+      "examples": [
+        1
+      ]
+    },
+    "dependencies": {
+      "type": "object",
+      "title": "Dependencies",
+      "description": "Plugins that this project depends on",
+      "examples": [
+        {
+          "hard": {
+            "ExampleHardDependency": "1.2.3"
+          },
+          "soft": [
+            "ExampleSoftDependency"
+          ]
+        }
+      ],
+      "properties": {
+        "hard": {
+          "type": "object",
+          "title": "Hard dependencies",
+          "description": "Plugins that must be present and their respective minimum versions",
+          "examples": [
+            {
+              "ExampleHardDependency": "1.2.3"
+            }
+          ],
+          "patternProperties": {
+            "^[a-zA-Z0-9\\._\\-]+$": {
+              "$id": "#/properties/assets/hard/properties",
+              "type": "string",
+              "title": "Hard dependency",
+              "description": "A plugin that must be present and its minimum version",
+              "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+(\\.[0-9]+)?)?$",
+              "examples": [
+                "1.2.3"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "soft": {
+          "type": "array",
+          "title": "Soft dependencies",
+          "description": "Plugins that must load before this project if present",
+          "examples": [
+            [
+              "ExampleSoftDependency"
+            ]
+          ],
+          "items": {
+            "$id": "#/properties/assets/soft/items",
+            "type": "string",
+            "title": "Soft dependency",
+            "description": "A plugin that must load before this project if present",
+            "pattern": "^[a-zA-Z0-9\\._\\-]+$",
+            "examples": [
+              "ExampleSoftDependency"
+            ]
+          },
+          "additionalItems": false
+        },
+        "additionalProperties": false
+      },
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "object",
+      "title": "Assets",
+      "description": "The assets to load",
+      "examples": [
+        {
+          "setup": [
+            {
+              "path" : "setup/*",
+              "plugin": "ExamplePlugin",
+              "loader": "ExampleLoader"
+            }
+          ],
+          "runtime": {
+            "name": "Root",
+            "assets": [
+              {
+                "path" : "runtime/unordered/*",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              }
+            ],
+            "pipelines": [
+              {
+                "name": "Ordered",
+                "sequential": true,
+                "assets": [
+                  {
+                    "path" : "runtime/ordered/first",
+                    "plugin": "ExamplePlugin",
+                    "loader": "ExampleLoader"
+                  },
+                  {
+                    "path" : "runtime/ordered/second",
+                    "plugin": "ExamplePlugin",
+                    "loader": "ExampleLoader"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "setup": {
+          "type": "array",
+          "title": "Assets",
+          "description": "The assets to load sequentially during the setup stage",
+          "examples": [
+            [
+              {
+                "path": "setup/*",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/definitions/asset"
+          },
+          "additionalItems": false
+        },
+        "runtime": {
+          "$ref": "#/definitions/asset_pipeline"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "asset": {
+      "type": "object",
+      "title": "Asset",
+      "description": "A resource to be loaded into a loader",
+      "examples": [
+        {
+          "path" : "setup/*",
+          "plugin": "ExamplePlugin",
+          "loader": "ExampleLoader"
+        }
+      ],
+      "required": [
+        "path",
+        "plugin",
+        "loader"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "Path",
+          "description": "The path to a resource. Globbing supported.",
+          "examples": [
+            "setup/*"
+          ]
+        },
+        "plugin": {
+          "type": "string",
+          "title": "Plugin",
+          "description": "The plugin that contains the loader to use",
+          "examples": [
+            "ExamplePlugin"
+          ]
+        },
+        "loader": {
+          "type": "string",
+          "title": "Loader",
+          "description": "The name of the loader to use",
+          "examples": [
+            "ExampleLoader"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "asset_pipeline": {
+      "type": "object",
+      "title": "Asset Pipeline",
+      "description": "A collection of runtime assets to load in a particular manner",
+      "examples": [
+        {
+          "name" : "Example Name",
+          "assets": {
+            "name": "Root",
+            "assets": [
+              {
+                "path" : "runtime/unordered/*",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              }
+            ],
+            "pipelines": [
+              {
+                "name": "Ordered",
+                "sequential": true,
+                "assets": [
+                  {
+                    "path" : "runtime/ordered/first",
+                    "plugin": "ExamplePlugin",
+                    "loader": "ExampleLoader"
+                  },
+                  {
+                    "path" : "runtime/ordered/second",
+                    "plugin": "ExamplePlugin",
+                    "loader": "ExampleLoader"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "description": "The human-readable name of the pipeline, used in the debug log",
+          "examples": [
+            "Root",
+            "Ordered"
+          ]
+        },
+        "sequential": {
+          "type": "boolean",
+          "title": "Sequential",
+          "description": "Loads assets sequentially, rather than in parallel",
+          "examples": [
+            true
+          ]
+        },
+        "assets": {
+          "type": "array",
+          "title": "Assets",
+          "description": "The assets to load",
+          "examples": [
+            [
+              {
+                "path" : "runtime/unordered/*",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              }
+            ],
+            [
+              {
+                "path" : "runtime/ordered/first",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              },
+              {
+                "path" : "runtime/ordered/second",
+                "plugin": "ExamplePlugin",
+                "loader": "ExampleLoader"
+              }
+            ]
+          ],
+          "items": {
+            "$ref": "#/definitions/asset"
+          },
+          "additionalItems": false
+        },
+        "pipeline": {
+          "$ref": "#/definitions/asset_pipeline"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

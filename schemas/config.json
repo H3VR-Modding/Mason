@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/H3VR-Modding/Mason/v1.0.0/schemas/config.json",
+  "type": "object",
+  "title": "Standalone Mason Config",
+  "description": "The config used by standalone Mason.",
+  "examples": [
+    {
+      "directories": {
+        "bepinex": "references/bepinex",
+        "managed": "references/managed"
+      }
+    }
+  ],
+  "required": [
+    "directories"
+  ],
+  "properties": {
+    "directories": {
+      "$id": "#/properties/directories",
+      "type": "object",
+      "title": "Directories",
+      "description": "Paths to directories that standalone Stratogen requires",
+      "examples": [
+        {
+          "bepinex": "references/bepinex",
+          "managed": "references/managed"
+        }
+      ],
+      "properties": {
+        "bepinex": {
+          "$id": "#/properties/directories/bepinex",
+          "type": "string",
+          "title": "BepInEx",
+          "description": "The path to the root BepInEx directory",
+          "examples": [
+            "references/bepinex"
+          ]
+        },
+        "managed": {
+          "$id": "#/properties/directories/managed",
+          "type": "string",
+          "title": "Managed",
+          "description": "The path to the game's 'Managed' directory",
+          "examples": [
+            "references/managed"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
