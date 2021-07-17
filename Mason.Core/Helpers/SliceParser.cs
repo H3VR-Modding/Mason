@@ -7,13 +7,16 @@ namespace Mason.Core
 	internal class SliceParser : IParser
 	{
 		private readonly IParser _parser;
-
-		private byte _state;
 		private ushort _stack = 1;
 
-		public ParsingEvent? Current { get; private set; }
+		private byte _state;
 
-		public SliceParser(IParser parser) => _parser = parser;
+		public SliceParser(IParser parser)
+		{
+			_parser = parser;
+		}
+
+		public ParsingEvent? Current { get; private set; }
 
 		public bool MoveNext()
 		{

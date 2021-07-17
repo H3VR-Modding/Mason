@@ -4,8 +4,6 @@ using Mason.Core.Markup;
 using Mason.Core.Thunderstore;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
-using DocumentStart = YamlDotNet.Core.Events.DocumentStart;
-using Scalar = YamlDotNet.Core.Events.Scalar;
 
 namespace Mason.Core.Parsing.Projects
 {
@@ -13,7 +11,8 @@ namespace Mason.Core.Parsing.Projects
 	{
 		public Dictionary<byte, IProjectParser> Versions { get; } = new();
 
-		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory, CompilerOutput output)
+		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory,
+			CompilerOutput output)
 		{
 			const string tagName = "version";
 
@@ -21,14 +20,14 @@ namespace Mason.Core.Parsing.Projects
 			project.Consume<DocumentStart>();
 			var start = project.Consume<MappingStart>();
 
-			var c = project.Current;
-			var lastIndex = start.End.GetIndex();
+			ParsingEvent? c = project.Current;
+			MarkupIndex lastIndex = start.End.GetIndex();
 
 			{
 				MarkupRange? range = null;
 
 				if (c is null)
-					range = new(default, lastIndex);
+					range = new MarkupRange(default, lastIndex);
 				else if (c is not Scalar {Value: tagName})
 					range = c.GetRange();
 				else
@@ -48,13 +47,15 @@ namespace Mason.Core.Parsing.Projects
 				MarkupRange? range = null;
 
 				if (!project.MoveNext())
-					range = new(lastIndex, lastIndex);
+				{
+					range = new MarkupRange(lastIndex, lastIndex);
+				}
 				else
 				{
 					c = project.Current;
 
 					if (c is null)
-						range = new(lastIndex, lastIndex);
+						range = new MarkupRange(lastIndex, lastIndex);
 					else if (c is not Scalar value || !byte.TryParse(value.Value, out numeric))
 						range = c.GetRange();
 					else
@@ -63,20 +64,22 @@ namespace Mason.Core.Parsing.Projects
 
 				if (range.HasValue)
 				{
-					output.Failure(MarkupMessage.File(projectFile, range.Value, "The '" + tagName + "' property must have a numeric value."));
+					output.Failure(
+						MarkupMessage.File(projectFile, range.Value, "The '" + tagName + "' property must have a numeric value."));
 					return null;
 				}
 			}
 
 			if (!Versions.TryGetValue(numeric, out IProjectParser version))
 			{
-				output.Failure(MarkupMessage.File(projectFile, valueRange, $"Version {numeric} is not supported by this version of Mason."));
+				output.Failure(MarkupMessage.File(projectFile, valueRange,
+					$"Version {numeric} is not supported by this version of Mason."));
 				return null;
 			}
 
 			project.MoveNext();
 
-			var ret = version.Parse(manifest, manifestFile, new SliceParser(project), projectFile, directory, output);
+			Mod? ret = version.Parse(manifest, manifestFile, new SliceParser(project), projectFile, directory, output);
 			if (ret is null)
 				return ret;
 
@@ -88,7 +91,7 @@ namespace Mason.Core.Parsing.Projects
 
 				MarkupRange? range = null;
 				if (c is null)
-					range = new(lastIndex, lastIndex);
+					range = new MarkupRange(lastIndex, lastIndex);
 				else if (c is not StreamEnd)
 					range = c.GetRange();
 

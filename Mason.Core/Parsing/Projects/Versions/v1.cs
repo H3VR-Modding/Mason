@@ -11,20 +11,21 @@ using Mason.Core.Thunderstore;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using Asset = Mason.Core.Projects.v1.Asset;
-using AssetPipeline = Mason.Core.Projects.v1.AssetPipeline;
-using Assets = Mason.Core.Projects.v1.Assets;
+using Asset = Mason.Core.IR.Asset;
+using AssetPipeline = Mason.Core.IR.AssetPipeline;
+using Assets = Mason.Core.IR.Assets;
+using Version = System.Version;
 
 namespace Mason.Core.Parsing.Projects.v1
 {
 	internal class V1ProjectParser : IProjectParser
 	{
-		private readonly GlobberFactory _globbers = new();
 		private readonly IDeserializer _deserializer;
+		private readonly GlobberFactory _globbers = new();
 
 		public V1ProjectParser()
 		{
-			var box = new Box<IDeserializer>();
+			Box<IDeserializer> box = new();
 
 			box.Value = _deserializer = new DeserializerBuilder()
 				.WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -33,110 +34,41 @@ namespace Mason.Core.Parsing.Projects.v1
 				.Build();
 		}
 
-		private IList<Marked<BepInDependency>> ToIR(Dependencies dependencies)
-		{
-			var total = new List<Marked<BepInDependency>>();
-
-			{
-				var hard = dependencies.Hard;
-				if (hard is not null)
-					foreach (var (guid, version) in hard)
-						total.Add(new(new(guid, version.Value.ToString()), version.Range));
-			}
-
-			{
-				var soft = dependencies.Soft;
-				if (soft is not null)
-					foreach (var guid in soft)
-						total.Add(new(new BepInDependency(guid.Value, BepInDependency.DependencyFlags.SoftDependency), guid.Range));
-			}
-
-			return total;
-		}
-
-		private IEnumerable<IR.Asset> ToIR(Core.Projects.v1.Asset asset, string root, CompilerOutput output) => _globbers
-			.Glob(root, asset.Path)
-			.Select(x =>
-			{
-				var rel = Tools.RelativePath(root, x) ?? throw new Exception("Could not find relative path to globbed result.");
-				output.ReferencedPaths.Add(rel);
-
-				return new IR.Asset(rel, asset.Plugin, asset.Loader);
-			});
-
-		private IList<IR.Asset> ToIR(IEnumerable<Core.Projects.v1.Asset> assets, string root, CompilerOutput output) => assets
-			.SelectMany(x => ToIR(x, root, output))
-			.ToList();
-
-		private IR.AssetPipeline ToIR(Core.Projects.v1.AssetPipeline pipeline, string root, CompilerOutput output)
-		{
-			var ret = new IR.AssetPipeline
-			{
-				Sequential = pipeline.Sequential,
-				Name = pipeline.Name
-			};
-
-			var assets = pipeline.Assets;
-			if (assets is not null)
-				ret.Assets = ToIR(assets, root, output);
-
-			var nested = pipeline.Nested;
-			if (nested is not null)
-				ret.Nested = Array.ConvertAll(nested, x => ToIR(x, root, output));
-
-			return ret;
-		}
-
-		private IR.Assets ToIR(Core.Projects.v1.Assets source, string root, CompilerOutput output)
-		{
-			IR.Assets assets = new();
-
-			{
-				var setup = source.Setup;
-				if (setup is not null)
-					assets.Setup = ToIR(setup, root, output);
-			}
-
-			{
-				var runtime = source.Runtime;
-				if (runtime is not null)
-					assets.Runtime = ToIR(runtime, root, output);
-			}
-
-			return assets;
-		}
-
-		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory, CompilerOutput output)
+		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory,
+			CompilerOutput output)
 		{
 			Metadata meta;
 			{
-				var author = manifest.Author;
+				string? author = manifest.Author;
 				if (author is null)
 				{
-					var full = Path.GetFullPath(directory); // We might be given a relative path (e.g. ".", "../") which can't be split
-					var split = Path.GetFileName(full).Split('-');
+					string full = Path.GetFullPath(directory); // We might be given a relative path (e.g. ".", "../") which can't be split
+					string[] split = Path.GetFileName(full).Split('-');
 					if (split.Length != 2)
 					{
-						output.Failure(MarkupMessage.Path(manifestFile, "The author property must be present, or the directory must be named [author]-[name]."));
+						output.Failure(MarkupMessage.Path(manifestFile,
+							"The author property must be present, or the directory must be named [author]-[name]."));
 						return null;
 					}
 
-					var name = manifest.Name;
+					Marked<string> name = manifest.Name;
 					if (split[1] != name.Value)
 					{
-						output.Failure(MarkupMessage.Path(manifestFile, $"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
+						output.Failure(MarkupMessage.Path(manifestFile,
+							$"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
 						return null;
 					}
 
 					author = split[0];
-					output.Warnings.Add(MarkupMessage.Path(manifestFile, "The author of the mod was infered by the directory name. Consider adding an 'author' property."));
+					output.Warnings.Add(MarkupMessage.Path(manifestFile,
+						"The author of the mod was infered by the directory name. Consider adding an 'author' property."));
 				}
 
 				{
-					var name = manifest.Name.Value;
-					var version = manifest.VersionNumber;
-					var guid = author + "-" + name;
-					meta = new Metadata(new(guid, name, version.ToString()), new(author, name, version));
+					string name = manifest.Name.Value;
+					Version version = manifest.VersionNumber;
+					string guid = author + "-" + name;
+					meta = new Metadata(new BepInPlugin(guid, name, version.ToString()), new PackageReference(author, name, version));
 				}
 			}
 
@@ -151,14 +83,94 @@ namespace Mason.Core.Parsing.Projects.v1
 				return null;
 			}
 
-			var dependencies = template.Dependencies;
+			Dependencies? dependencies = template.Dependencies;
 			if (dependencies is not null)
 				meta.Dependencies = ToIR(dependencies);
 
-			return new(meta)
+			return new Mod(meta)
 			{
 				Assets = ToIR(template.Assets, Path.Combine(directory, "resources"), output)
 			};
+		}
+
+		private IList<Marked<BepInDependency>> ToIR(Dependencies dependencies)
+		{
+			List<Marked<BepInDependency>> total = new();
+
+			{
+				Dictionary<string, Marked<Version>>? hard = dependencies.Hard;
+				if (hard is not null)
+					foreach ((string guid, Marked<Version> version) in hard)
+						total.Add(new Marked<BepInDependency>(new BepInDependency(guid, version.Value.ToString()), version.Range));
+			}
+
+			{
+				Marked<string>[]? soft = dependencies.Soft;
+				if (soft is not null)
+					foreach (Marked<string> guid in soft)
+						total.Add(new Marked<BepInDependency>(
+							new BepInDependency(guid.Value, BepInDependency.DependencyFlags.SoftDependency), guid.Range));
+			}
+
+			return total;
+		}
+
+		private IEnumerable<Asset> ToIR(Core.Projects.v1.Asset asset, string root, CompilerOutput output)
+		{
+			return _globbers
+				.Glob(root, asset.Path)
+				.Select(x =>
+				{
+					string rel = Tools.RelativePath(root, x) ?? throw new Exception("Could not find relative path to globbed result.");
+					output.ReferencedPaths.Add(rel);
+
+					return new Asset(rel, asset.Plugin, asset.Loader);
+				});
+		}
+
+		private IList<Asset> ToIR(IEnumerable<Core.Projects.v1.Asset> assets, string root, CompilerOutput output)
+		{
+			return assets
+				.SelectMany(x => ToIR(x, root, output))
+				.ToList();
+		}
+
+		private AssetPipeline ToIR(Core.Projects.v1.AssetPipeline pipeline, string root, CompilerOutput output)
+		{
+			AssetPipeline ret = new()
+			{
+				Sequential = pipeline.Sequential,
+				Name = pipeline.Name
+			};
+
+			Core.Projects.v1.Asset[]? assets = pipeline.Assets;
+			if (assets is not null)
+				ret.Assets = ToIR(assets, root, output);
+
+			Core.Projects.v1.AssetPipeline[]? nested = pipeline.Nested;
+			if (nested is not null)
+				ret.Nested = Array.ConvertAll(nested, x => ToIR(x, root, output));
+
+			return ret;
+		}
+
+		private Assets ToIR(Core.Projects.v1.Assets source, string root, CompilerOutput output)
+		{
+			Assets assets = new();
+
+			{
+				Core.Projects.v1.Asset[]? setup = source.Setup;
+				if (setup is not null)
+					assets.Setup = ToIR(setup, root, output);
+			}
+
+			{
+				Core.Projects.v1.AssetPipeline? runtime = source.Runtime;
+				if (runtime is not null)
+					assets.Runtime = ToIR(runtime, root, output);
+			}
+
+			return assets;
 		}
 	}
 }

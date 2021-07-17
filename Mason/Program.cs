@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using Mason.Core;
 using Mason.Core.Markup;
+using Mason.Core.Thunderstore;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -14,12 +15,9 @@ namespace Mason.Standalone
 {
 	internal class Program
 	{
-		private readonly Config _config;
-		private readonly string _dir;
-
 		public static async Task<int> Main(string[] args)
 		{
-			var result = Parser.Default.ParseArguments<BuildOptions, PackOptions>(args);
+			ParserResult<object> result = Parser.Default.ParseArguments<BuildOptions, PackOptions>(args);
 
 			if (result is NotParsed<object>)
 				return (int) ExitCode.Internal;
@@ -27,26 +25,26 @@ namespace Mason.Standalone
 			var opt = (Options) ((Parsed<object>) result).Value;
 			Console.WriteLine("Parsed commandline arguments");
 
-			var projectDir = Path.Combine(Environment.CurrentDirectory, opt.Directory);
+			string projectDir = Path.Combine(Environment.CurrentDirectory, opt.Directory);
 			if (!Directory.Exists(projectDir))
 			{
-				Error(MarkupMessage.Path(projectDir, $"The project directory does not exist"));
+				Error(MarkupMessage.Path(projectDir, "The project directory does not exist"));
 				return (int) ExitCode.ProjectDirectoryDoesNotExist;
 			}
 
-			var file = new FileInfo(opt.Config);
+			FileInfo file = new(opt.Config);
 			if (!file.Exists)
 			{
-				Error(MarkupMessage.Path(file.FullName, $"Missing configuration file"));
+				Error(MarkupMessage.Path(file.FullName, "Missing configuration file"));
 				return (int) ExitCode.MissingConfig;
 			}
 
-			var config = ReadConfig(file);
+			Config config = ReadConfig(file);
 
 			Console.WriteLine("Parsed config");
 
 			{
-				var dir = config.Directories.Bepinex;
+				string dir = config.Directories.Bepinex;
 				if (!Directory.Exists(dir))
 				{
 					Error(MarkupMessage.Path(dir, "Could not find the BepInEx directory"));
@@ -55,7 +53,7 @@ namespace Mason.Standalone
 			}
 
 			{
-				var dir = config.Directories.Managed;
+				string dir = config.Directories.Managed;
 				if (!Directory.Exists(dir))
 				{
 					Error(MarkupMessage.Path(dir, "Could not find the Markup directory"));
@@ -63,7 +61,7 @@ namespace Mason.Standalone
 				}
 			}
 
-			var inst = new Program(config, projectDir);
+			Program inst = new(config, projectDir);
 			return (int) await (opt switch
 			{
 				BuildOptions x => inst.Build(x),
@@ -74,9 +72,9 @@ namespace Mason.Standalone
 
 		private static Config ReadConfig(FileInfo file)
 		{
-			using var reader = file.OpenText();
+			using StreamReader reader = file.OpenText();
 
-			var deserializer = new DeserializerBuilder()
+			IDeserializer deserializer = new DeserializerBuilder()
 				.WithNamingConvention(UnderscoredNamingConvention.Instance)
 				.Build();
 
@@ -88,12 +86,25 @@ namespace Mason.Standalone
 
 		private static async Task Write(Stream content, string dest)
 		{
-			await using var file = File.Create(dest);
+			await using FileStream file = File.Create(dest);
 			Console.WriteLine("Acquired output file");
 
 			await content.CopyToAsync(file);
 			Console.WriteLine("Wrote content to disk");
 		}
+
+		private static void Error(MarkupMessage message)
+		{
+			Console.WriteLine(message.ToString("error", RelativePath));
+		}
+
+		private static string RelativePath(string path)
+		{
+			return Path.GetRelativePath(Environment.CurrentDirectory, path);
+		}
+
+		private readonly Config _config;
+		private readonly string _dir;
 
 		private Program(Config config, string dir)
 		{
@@ -105,13 +116,15 @@ namespace Mason.Standalone
 		{
 			MemoryStream buffer;
 			{
-				var code = Compile(out buffer, out _);
+				ExitCode code = Compile(out buffer, out _);
 				if (code != ExitCode.None)
 					return code;
 			}
 
 			await using (buffer)
+			{
 				await Write(buffer, opt.Output);
+			}
 
 			return ExitCode.None;
 		}
@@ -123,27 +136,30 @@ namespace Mason.Standalone
 			MemoryStream buffer;
 			ICompilerOutput output;
 			{
-				var code = Compile(out buffer, out output!);
+				ExitCode code = Compile(out buffer, out output!);
 				if (code != ExitCode.None)
 					return code;
 			}
 
 			await using (buffer)
 			{
-				await using var backing = new MemoryStream();
-				using (var archive = new ZipArchive(backing, ZipArchiveMode.Create, true))
+				await using MemoryStream backing = new();
+				using (ZipArchive archive = new(backing, ZipArchiveMode.Create, true))
 				{
 					{
-						var plugin = archive.CreateEntry(pluginsPrefix + "bootstrap.dll", opt.Compression);
+						ZipArchiveEntry plugin = archive.CreateEntry(pluginsPrefix + "bootstrap.dll", opt.Compression);
 						plugin.LastWriteTime = DateTimeOffset.Now;
 
-						await using var content = plugin.Open();
+						await using Stream content = plugin.Open();
 						await buffer.CopyToAsync(content);
 					}
 
 					// TODO: add Stratum dependency to manifest.json before adding to zip
 
-					foreach (var file in new[] {"manifest.json", "README.md", "icon.png"})
+					foreach (string file in new[]
+					{
+						"manifest.json", "README.md", "icon.png"
+					})
 					{
 						if (!File.Exists(file))
 						{
@@ -154,15 +170,15 @@ namespace Mason.Standalone
 						archive.AddFile(file, file, opt.Compression);
 					}
 
-					var builder = new StringBuilder();
-					var entries = new HashSet<string>();
-					foreach (var path in output.ReferencedPaths)
+					StringBuilder builder = new();
+					HashSet<string> entries = new();
+					foreach (string path in output.ReferencedPaths)
 					{
 						const string resources = "resources";
 						const string resourcesDir = resources + "/";
 						const string zipDir = pluginsPrefix + resourcesDir;
 
-						var realPath = Path.Combine(resources, path);
+						string realPath = Path.Combine(resources, path);
 
 						if (File.Exists(realPath))
 						{
@@ -185,11 +201,13 @@ namespace Mason.Standalone
 							entries.Add(path);
 						}
 						else
+						{
 							throw new IOException("Neither a file nor a directory was referenced");
+						}
 					}
 				}
 
-				Console.WriteLine($"Constructed archive");
+				Console.WriteLine("Constructed archive");
 
 				backing.Position = 0;
 				await Write(backing, opt.Output);
@@ -202,8 +220,8 @@ namespace Mason.Standalone
 		{
 			buffer = new MemoryStream(2 * 4096);
 
-			var parameters = new CompilerParameters(_config.Directories.Managed, _config.Directories.Bepinex);
-			var compiler = new Compiler(parameters);
+			CompilerParameters parameters = new(_config.Directories.Managed, _config.Directories.Bepinex);
+			Compiler compiler = new(parameters);
 			Console.WriteLine("Constructed compiler");
 
 			output = compiler.Compile(_dir, buffer);
@@ -219,24 +237,20 @@ namespace Mason.Standalone
 				return ExitCode.MissingProjectFiles;
 			}
 
-			if (!output.MatchSuccess(out var error, out var package))
+			if (!output.MatchSuccess(out MarkupMessage? error, out PackageReference? package))
 			{
 				Error(error);
 				return ExitCode.Compiler;
 			}
 
-			var warnings = output.Warnings;
+			IList<MarkupMessage> warnings = output.Warnings;
 
-			foreach (var warning in warnings)
+			foreach (MarkupMessage warning in warnings)
 				Console.WriteLine(warning.ToString("warning", RelativePath));
 
 			Console.WriteLine($"Compiled {package.Value} with {warnings.Count} warnings");
 
 			return ExitCode.None;
 		}
-
-		private static void Error(MarkupMessage message) => Console.WriteLine(message.ToString("error", RelativePath));
-
-		private static string RelativePath(string path) => Path.GetRelativePath(Environment.CurrentDirectory, path);
 	}
 }

@@ -15,26 +15,24 @@ namespace Mason.Core.Globbing
 
 		public IEnumerable<string> Globber(string directory)
 		{
-			using var enumerator = _globs.GetEnumerator();
+			using IEnumerator<Globber> enumerator = _globs.GetEnumerator();
 
-			IEnumerable<string> directories = new[] {directory};
+			IEnumerable<string> directories = new[]
+			{
+				directory
+			};
 
 			Globber? glob = null;
 			if (enumerator.MoveNext())
-			{
 				while (true)
 				{
 					glob = enumerator.Current!;
-					var next = enumerator.MoveNext();
-					if (!next)
-					{
+					if (!enumerator.MoveNext())
 						break;
-					}
 
-					var globC = glob;
+					Globber globC = glob;
 					directories = directories.SelectMany(d => globC(d)).Where(Directory.Exists);
 				}
-			}
 
 			return glob is null ? directories : directories.SelectMany(d => glob(d));
 		}

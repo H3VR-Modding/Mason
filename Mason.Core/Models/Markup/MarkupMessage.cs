@@ -5,13 +5,20 @@ namespace Mason.Core.Markup
 {
 	public class MarkupMessage
 	{
-		public static MarkupMessage Path(string path, string message) => new(message, new(path, default));
-		public static MarkupMessage File(string path, MarkupIndex index, string message) => new(message, new(path, index));
-		public static MarkupMessage File(string path, MarkupRange range, string message) => new(message, new(path, range.Start, range.End));
+		public static MarkupMessage Path(string path, string message)
+		{
+			return new(message, new MarkupLocation(path, default));
+		}
 
-		public string Message { get; }
+		public static MarkupMessage File(string path, MarkupIndex index, string message)
+		{
+			return new(message, new MarkupLocation(path, index));
+		}
 
-		public MarkupLocation Location { get; }
+		public static MarkupMessage File(string path, MarkupRange range, string message)
+		{
+			return new(message, new MarkupLocation(path, range.Start, range.End));
+		}
 
 		private MarkupMessage(string message, MarkupLocation location)
 		{
@@ -19,9 +26,13 @@ namespace Mason.Core.Markup
 			Location = location;
 		}
 
+		public string Message { get; }
+
+		public MarkupLocation Location { get; }
+
 		public string ToString(string severity, Func<string, string> pathToString)
 		{
-			var builder = new StringBuilder(severity)
+			StringBuilder builder = new StringBuilder(severity)
 				.Append(" at ")
 				.Append(pathToString(Location.Path))
 				.Append('(')
@@ -29,10 +40,10 @@ namespace Mason.Core.Markup
 				.Append(',')
 				.Append(Location.Start.Column);
 			{
-				var end = Location.End;
+				MarkupIndex? end = Location.End;
 				if (end.HasValue)
 				{
-					var value = end.Value;
+					MarkupIndex value = end.Value;
 
 					builder
 						.Append('-')

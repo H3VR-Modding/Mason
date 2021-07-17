@@ -8,14 +8,23 @@ namespace Mason.Core
 {
 	internal class CompilerOutput : ICompilerOutput
 	{
-		private bool? _successful;
 		private MarkupMessage? _error;
 		private PackageReference? _package;
+		private bool? _successful;
 
 		public List<MarkupMessage> Warnings { get; } = new();
-		IList<MarkupMessage> ICompilerOutput.Warnings => Warnings;
 		public HashSet<string> ReferencedPaths { get; } = new();
+		IList<MarkupMessage> ICompilerOutput.Warnings => Warnings;
 		IEnumerable<string> ICompilerOutput.ReferencedPaths => ReferencedPaths;
+
+		public bool MatchSuccess([NotNullWhen(false)] out MarkupMessage? error, [NotNullWhen(true)] out PackageReference? package)
+		{
+			error = _error;
+			package = _package;
+			return _successful ??
+			       throw new InvalidOperationException(
+				       "Success indicator was not set. This is indicative that something has gone horribly wrong.");
+		}
 
 		public void Success(PackageReference package)
 		{
@@ -27,13 +36,6 @@ namespace Mason.Core
 		{
 			_error = error;
 			_successful = false;
-		}
-
-		public bool MatchSuccess([NotNullWhen(false)] out MarkupMessage? error, [NotNullWhen(true)] out PackageReference? package)
-		{
-			error = _error;
-			package = _package;
-			return _successful ?? throw new InvalidOperationException("Success indicator was not set. This is indicative that something has gone horribly wrong.");
 		}
 	}
 }

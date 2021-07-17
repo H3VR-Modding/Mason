@@ -13,9 +13,15 @@ namespace Mason.Core.Thunderstore
 			Name = name;
 		}
 
-		public bool Equals(PackageReferenceNoVersion other) => Author == other.Author && Name == other.Name;
+		public bool Equals(PackageReferenceNoVersion other)
+		{
+			return Author == other.Author && Name == other.Name;
+		}
 
-		public override bool Equals(object? obj) => obj is PackageReferenceNoVersion other && Equals(other);
+		public override bool Equals(object? obj)
+		{
+			return obj is PackageReferenceNoVersion other && Equals(other);
+		}
 
 		public override int GetHashCode()
 		{
@@ -25,8 +31,14 @@ namespace Mason.Core.Thunderstore
 			}
 		}
 
-		public override string ToString() => Author + "-" + Name;
+		public override string ToString()
+		{
+			return Author + "-" + Name;
+		}
 
-		public static implicit operator PackageReferenceNoVersion(PackageReference @this) => new(@this.Author, @this.Name);
+		public static implicit operator PackageReferenceNoVersion(PackageReference @this)
+		{
+			return new(@this.Author, @this.Name);
+		}
 	}
 }

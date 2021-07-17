@@ -6,33 +6,35 @@ using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 using Mason.Core;
+using Mason.Core.Markup;
+using Mason.Core.Thunderstore;
 using Mono.Cecil;
 
 namespace Mason.Patcher
 {
 	public static class Entrypoint
 	{
-		private static ManualLogSource _logger = Logger.CreateLogSource("Mason Patcher");
+		private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("Mason Patcher");
 
 		public static IEnumerable<string> TargetDLLs => Enumerable.Empty<string>();
 
 		public static void Patch(AssemblyDefinition asm)
 		{
-			_logger.LogWarning("There aren't be any assemblies to patch, but BepInEx called the patch function. Assembly: " + asm);
+			Logger.LogWarning("There aren't be any assemblies to patch, but BepInEx called the patch function. Assembly: " + asm);
 		}
 
 		public static void Finish()
 		{
-			_logger.LogDebug("Bootstrapping Mason...");
+			Logger.LogDebug("Bootstrapping Mason...");
 
-			var parameters = new CompilerParameters(Paths.ManagedPath, Paths.BepInExRootPath);
-			var compiler = new Compiler(parameters);
+			CompilerParameters parameters = new(Paths.ManagedPath, Paths.BepInExRootPath);
+			Compiler compiler = new(parameters);
 
-			_logger.LogDebug("Constructed compiler");
+			Logger.LogDebug("Constructed compiler");
 
-			using var buffer = new MemoryStream(2 * 4096);
+			using MemoryStream buffer = new(2 * 4096);
 
-			foreach (var directory in Directory.GetDirectories(Paths.PluginPath))
+			foreach (string directory in Directory.GetDirectories(Paths.PluginPath))
 			{
 				string GetDirectoryName() => Path.GetFileName(directory);
 
@@ -45,40 +47,40 @@ namespace Mason.Patcher
 				}
 				catch (Exception e)
 				{
-					_logger.LogError($"Failed to compile {GetDirectoryName()}:\n{e}");
+					Logger.LogError($"Failed to compile {GetDirectoryName()}:\n{e}");
 					continue;
 				}
 
 				if (output is null)
 					continue;
 
-				if (!output.MatchSuccess(out var error, out var package))
+				if (!output.MatchSuccess(out MarkupMessage? error, out PackageReference? package))
 				{
-					var name = package?.Name ?? GetDirectoryName();
+					string name = package?.Name ?? GetDirectoryName();
 
-					_logger.LogError($"Failed to compile {name}:\n{error.ToString("error", Path.GetFullPath)}");
+					Logger.LogError($"Failed to compile {name}:\n{error.ToString("error", Path.GetFullPath)}");
 				}
 				else
 				{
-					var warnings = output.Warnings;
+					IList<MarkupMessage> warnings = output.Warnings;
 
 					if (warnings.Count > 0)
 					{
-						var builder = new StringBuilder().AppendLine();
+						StringBuilder? builder = new StringBuilder().AppendLine();
 
-						foreach (var warning in warnings)
+						foreach (MarkupMessage warning in warnings)
 							builder.AppendLine(warning.ToString("warning", Path.GetFullPath));
 
-						_logger.LogWarning(builder.ToString());
+						Logger.LogWarning(builder.ToString());
 					}
 
-					_logger.LogInfo($"Compiled {package.Value} with {warnings.Count} warnings");
+					Logger.LogInfo($"Compiled {package.Value} with {warnings.Count} warnings");
 
-					using var file = File.Create(Path.Combine(directory, "bootstrap.dll"));
-					_logger.LogDebug("Acquired output file");
+					using FileStream? file = File.Create(Path.Combine(directory, "bootstrap.dll"));
+					Logger.LogDebug("Acquired output file");
 
 					buffer.CopyTo(file);
-					_logger.LogDebug($"Wrote content to disk");
+					Logger.LogDebug("Wrote content to disk");
 				}
 			}
 		}

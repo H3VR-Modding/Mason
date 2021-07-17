@@ -10,29 +10,32 @@ namespace Mason.Core.Parsing.Projects
 	{
 		private readonly Box<IDeserializer> _deserializer;
 
-		public MarkedTypeConverter(Box<IDeserializer> deserializer) => _deserializer = deserializer;
+		public MarkedTypeConverter(Box<IDeserializer> deserializer)
+		{
+			_deserializer = deserializer;
+		}
 
-		public bool Accepts(Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Marked<>);
+		public bool Accepts(Type type)
+		{
+			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Marked<>);
+		}
 
 		public object? ReadYaml(IParser parser, Type type)
 		{
-			var marker = new MarkParser(parser);
-			var value = _deserializer.Value.Deserialize(marker, type.GetGenericArguments()[0]);
+			MarkParser marker = new(parser);
+			object? value = _deserializer.Value.Deserialize(marker, type.GetGenericArguments()[0]);
 
 			return Activator.CreateInstance(type, value, new MarkupRange(marker.Start.GetIndex(), marker.End.GetIndex()));
 		}
 
-		public void WriteYaml(IEmitter emitter, object? value, Type type) => throw new NotSupportedException();
+		public void WriteYaml(IEmitter emitter, object? value, Type type)
+		{
+			throw new NotSupportedException();
+		}
 
 		private class MarkParser : IParser
 		{
 			private readonly IParser _parser;
-
-			public ParsingEvent? Current { get; private set; }
-
-			public Mark Start { get; }
-
-			public Mark End { get; private set; }
 
 			public MarkParser(IParser parser)
 			{
@@ -43,11 +46,17 @@ namespace Mason.Core.Parsing.Projects
 				End = Start;
 			}
 
+			public Mark Start { get; }
+
+			public Mark End { get; private set; }
+
+			public ParsingEvent? Current { get; private set; }
+
 			public bool MoveNext()
 			{
 				End = Current?.End ?? Mark.Empty;
 
-				var ret = _parser.MoveNext();
+				bool ret = _parser.MoveNext();
 				Current = _parser.Current;
 
 				return ret;

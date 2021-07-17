@@ -6,6 +6,12 @@ namespace Mason.Core.IR
 {
 	internal class Metadata : IOptimizable<Metadata>
 	{
+		public Metadata(BepInPlugin plugin, PackageReference package)
+		{
+			Plugin = plugin;
+			Package = package;
+		}
+
 		public BepInPlugin Plugin { get; }
 		public PackageReference Package { get; }
 
@@ -13,17 +19,14 @@ namespace Mason.Core.IR
 		public IList<Marked<BepInDependency>>? Dependencies { get; set; }
 		public IList<BepInIncompatibility>? Incompatibilities { get; set; }
 
-		public Metadata(BepInPlugin plugin, PackageReference package)
+		public Metadata Optimize()
 		{
-			Plugin = plugin;
-			Package = package;
+			return new(Plugin, Package)
+			{
+				Processes = Processes?.Optimize(),
+				Dependencies = Dependencies?.Optimize(),
+				Incompatibilities = Incompatibilities?.Optimize()
+			};
 		}
-
-		public Metadata Optimize() => new(Plugin, Package)
-		{
-			Processes = Processes?.Optimize(),
-			Dependencies = Dependencies?.Optimize(),
-			Incompatibilities = Incompatibilities?.Optimize(),
-		};
 	}
 }

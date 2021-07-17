@@ -5,21 +5,21 @@ using Mason.Core.IR;
 using Mason.Core.RefsAndDefs;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using MonoMod.Utils;
-using FieldAttributes = Mono.Cecil.FieldAttributes;
-using MethodAttributes = Mono.Cecil.MethodAttributes;
-using ParameterAttributes = Mono.Cecil.ParameterAttributes;
-using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace Mason.Core
 {
 	internal class Generator
 	{
 		private const TypeAttributes PluginAttributes = TypeAttributes.Public | TypeAttributes.Sealed;
+
 		private const TypeAttributes CompilerGeneratedAttributes = TypeAttributes.NestedPrivate | TypeAttributes.Sealed |
 		                                                           TypeAttributes.Serializable | TypeAttributes.BeforeFieldInit;
 
-		private const MethodAttributes PublicOverrideAttributes = MethodAttributes.Public  | MethodAttributes.HideBySig | MethodAttributes.Virtual;
+		private const MethodAttributes PublicOverrideAttributes =
+			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
+
 		private const MethodAttributes LambdaMethodAttributes = MethodAttributes.Assembly | MethodAttributes.HideBySig;
 
 		private const FieldAttributes LambdaCacheAttributes = FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly;
@@ -27,11 +27,13 @@ namespace Mason.Core
 		private const MethodAttributes CctorAttributes =
 			MethodAttributes.Private | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName |
 			MethodAttributes.RTSpecialName;
+
 		private const MethodAttributes CtorAttributes =
 			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
 
-		private readonly IAssemblyResolver _resolver;
 		private readonly RootRef _refs;
+
+		private readonly IAssemblyResolver _resolver;
 
 		public Generator(IAssemblyResolver resolver, RootRef refs)
 		{
@@ -39,7 +41,10 @@ namespace Mason.Core
 			_refs = refs;
 		}
 
-		public AssemblyDefinition Generate(Mod mod) => new Scoped(this, mod).Generate();
+		public AssemblyDefinition Generate(Mod mod)
+		{
+			return new Scoped(this, mod).Generate();
+		}
 
 		private struct Scoped
 		{
@@ -59,26 +64,27 @@ namespace Mason.Core
 				{
 					if (_cg is null)
 					{
-						var @void = _module.TypeSystem.Void;
+						TypeReference @void = _module.TypeSystem.Void;
 
-						var type = new TypeDefinition(null, "<>c", CompilerGeneratedAttributes);
-						type.CustomAttributes.Add(new(_module.ImportReference(_refs.Mscorlib.CompilerGeneratedAttributeCtor)));
+						TypeDefinition type = new(null, "<>c", CompilerGeneratedAttributes);
+						type.CustomAttributes.Add(
+							new CustomAttribute(_module.ImportReference(_refs.Mscorlib.CompilerGeneratedAttributeCtor)));
 
-						var cache = new FieldDefinition("<>Instance", LambdaCacheAttributes, type);
+						FieldDefinition cache = new("<>Instance", LambdaCacheAttributes, type);
 						type.Fields.Add(cache);
 
-						var ctor = new MethodDefinition(".ctor", CtorAttributes, @void);
+						MethodDefinition ctor = new(".ctor", CtorAttributes, @void);
 						{
-							var il = ctor.Body.GetILProcessor();
+							ILProcessor il = ctor.Body.GetILProcessor();
 
 							il.Emit(OpCodes.Ldarg_0);
 							il.Emit(OpCodes.Call, _module.ImportReference(_refs.Mscorlib.ObjectCtor));
 							il.Emit(OpCodes.Ret);
 						}
 
-						var cctor = new MethodDefinition(".cctor", CctorAttributes, @void);
+						MethodDefinition cctor = new(".cctor", CctorAttributes, @void);
 						{
-							var il = cctor.Body.GetILProcessor();
+							ILProcessor il = cctor.Body.GetILProcessor();
 
 							il.Emit(OpCodes.Newobj, ctor);
 							il.Emit(OpCodes.Stsfld, cache);
@@ -90,22 +96,22 @@ namespace Mason.Core
 
 						_type.NestedTypes.Add(type);
 
-						_cg = new(type, cache);
+						_cg = new CgCache(type, cache);
 					}
 
 					return _cg;
 				}
 			}
 
-			private Stack<int> NestedIndices => _nestedIndices ??= new();
+			private Stack<int> NestedIndices => _nestedIndices ??= new Stack<int>();
 
 			public Scoped(Generator generator, Mod mod)
 			{
 				_refs = generator._refs;
 				_mod = mod;
 
-				var plugin = mod.Metadata.Plugin;
-				var name = new AssemblyNameDefinition(plugin.GUID, plugin.Version);
+				BepInPlugin plugin = mod.Metadata.Plugin;
+				AssemblyNameDefinition name = new(plugin.GUID, plugin.Version);
 				var asm = AssemblyDefinition.CreateAssembly(name, plugin.GUID, new ModuleParameters
 				{
 					AssemblyResolver = generator._resolver,
@@ -114,7 +120,7 @@ namespace Mason.Core
 
 				_module = asm.MainModule;
 
-				var @base = _module.ImportReference(_refs.Stratum.StratumPluginType);
+				TypeReference @base = _module.ImportReference(_refs.Stratum.StratumPluginType);
 				_type = new TypeDefinition(null, "Plugin", PluginAttributes, @base);
 				_module.Types.Add(_type);
 
@@ -154,14 +160,10 @@ namespace Mason.Core
 			private void EmitStartCoroutineReferenceLast(ILProcessor il)
 			{
 				if (_coroutineCache is null)
-				{
 					// No need to store the last call
 					EmitStartCoroutineNewobj(il);
-				}
 				else
-				{
 					il.Emit(OpCodes.Ldsfld, _coroutineCache);
-				}
 			}
 
 			private void EmitAssetPipelineCtor(ILProcessor il, StratumRefs.Generics tRet)
@@ -192,17 +194,18 @@ namespace Mason.Core
 			private void EmitNestedPipeline(ILProcessor il, AssetPipeline pipeline)
 			{
 				var name = "<OnRuntime>";
-				foreach (var index in NestedIndices)
+				foreach (int index in NestedIndices)
 					name += "_" + index;
 
 				MethodDefinition lambda;
 				{
-					var @void = _module.TypeSystem.Void;
+					TypeReference @void = _module.TypeSystem.Void;
 					lambda = new MethodDefinition(name, LambdaMethodAttributes, @void);
-					lambda.Parameters.Add(new("pipeline", ParameterAttributes.None, _module.ImportReference(_refs.Stratum.RuntimeGenerics.AssetPipelineType)));
+					lambda.Parameters.Add(new ParameterDefinition("pipeline", ParameterAttributes.None,
+						_module.ImportReference(_refs.Stratum.RuntimeGenerics.AssetPipelineType)));
 
 					{
-						var lambdaIL = lambda.Body.GetILProcessor();
+						ILProcessor lambdaIL = lambda.Body.GetILProcessor();
 
 						lambdaIL.Emit(OpCodes.Ldarg_1);
 						EmitAssetPipelineBody(lambdaIL, pipeline);
@@ -235,32 +238,33 @@ namespace Mason.Core
 			private void EmitAssetPipelineBody(ILProcessor il, AssetPipeline pipeline)
 			{
 				var i = 0;
-				foreach (var nested in pipeline.Nested)
+				foreach (AssetPipeline nested in pipeline.Nested)
 				{
 					NestedIndices.Push(i++);
 					EmitNestedPipeline(il, nested);
 					NestedIndices.Pop();
 				}
 
-				foreach (var asset in pipeline.Assets)
+				foreach (Asset asset in pipeline.Assets)
 					EmitAsset(il, _refs.Stratum.RuntimeGenerics, asset);
 			}
 
 			private void AddSetupMethod()
 			{
-				var generics = _refs.Stratum.SetupGenerics;
+				StratumRefs.Generics generics = _refs.Stratum.SetupGenerics;
 
-				var method = new MethodDefinition("OnSetup", PublicOverrideAttributes, _module.TypeSystem.Void);
-				method.Parameters.Add(new("ctx", ParameterAttributes.None, _module.ImportReference(generics.IStageContextType)));
+				MethodDefinition method = new("OnSetup", PublicOverrideAttributes, _module.TypeSystem.Void);
+				method.Parameters.Add(new ParameterDefinition("ctx", ParameterAttributes.None,
+					_module.ImportReference(generics.IStageContextType)));
 
-				var il = method.Body.GetILProcessor();
-				var assets = _mod.Assets?.Setup;
+				ILProcessor il = method.Body.GetILProcessor();
+				IList<Asset>? assets = _mod.Assets?.Setup;
 
 				if (assets is not null)
 				{
 					EmitAssetPipelineCtor(il, generics);
 
-					foreach (var asset in assets)
+					foreach (Asset asset in assets)
 						EmitAsset(il, generics, asset);
 
 					il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.AssetPipelineBuild));
@@ -274,13 +278,15 @@ namespace Mason.Core
 
 			private void AddRuntimeMethod()
 			{
-				var generics = _refs.Stratum.RuntimeGenerics;
+				StratumRefs.Generics generics = _refs.Stratum.RuntimeGenerics;
 
-				var method = new MethodDefinition("OnRuntime", PublicOverrideAttributes, _module.ImportReference(_refs.Mscorlib.IEnumeratorType));
-				method.Parameters.Add(new("ctx", ParameterAttributes.None, _module.ImportReference(generics.IStageContextType)));
+				MethodDefinition method = new("OnRuntime", PublicOverrideAttributes,
+					_module.ImportReference(_refs.Mscorlib.IEnumeratorType));
+				method.Parameters.Add(new ParameterDefinition("ctx", ParameterAttributes.None,
+					_module.ImportReference(generics.IStageContextType)));
 
-				var il = method.Body.GetILProcessor();
-				var pipeline = _mod.Assets?.Runtime;
+				ILProcessor il = method.Body.GetILProcessor();
+				AssetPipeline? pipeline = _mod.Assets?.Runtime;
 
 				if (pipeline is not null)
 				{
@@ -313,33 +319,33 @@ namespace Mason.Core
 
 			private void AddMetadata()
 			{
-				var refs = _refs.BepInEx;
-				var str = _module.TypeSystem.String;
-				var metadata = _mod.Metadata;
-				var attr = _type.CustomAttributes;
+				BepInExRefs refs = _refs.BepInEx;
+				TypeReference str = _module.TypeSystem.String;
+				Metadata metadata = _mod.Metadata;
+				Collection<CustomAttribute> attr = _type.CustomAttributes;
 
 				{
-					var source = metadata.Plugin;
-					var dest = new CustomAttribute(_module.ImportReference(refs.BepInPluginCtor));
+					BepInPlugin source = metadata.Plugin;
+					CustomAttribute dest = new(_module.ImportReference(refs.BepInPluginCtor));
 
-					dest.ConstructorArguments.Add(new(str, source.GUID));
-					dest.ConstructorArguments.Add(new(str, source.Name));
-					dest.ConstructorArguments.Add(new(str, source.Version.ToString()));
+					dest.ConstructorArguments.Add(new CustomAttributeArgument(str, source.GUID));
+					dest.ConstructorArguments.Add(new CustomAttributeArgument(str, source.Name));
+					dest.ConstructorArguments.Add(new CustomAttributeArgument(str, source.Version.ToString()));
 
 					attr.Add(dest);
 				}
 
 
-				foreach (var source in metadata.Processes.OrEmptyIfNull())
+				foreach (BepInProcess source in metadata.Processes.OrEmptyIfNull())
 				{
-					var dest = new CustomAttribute(_module.ImportReference(refs.BepInProcessCtor));
+					CustomAttribute dest = new(_module.ImportReference(refs.BepInProcessCtor));
 
-					dest.ConstructorArguments.Add(new(str, source.ProcessName));
+					dest.ConstructorArguments.Add(new CustomAttributeArgument(str, source.ProcessName));
 
 					attr.Add(dest);
 				}
 
-				foreach (var source in metadata.Dependencies.OrEmptyIfNull().Select(x => x.Value))
+				foreach (BepInDependency source in metadata.Dependencies.OrEmptyIfNull().Select(x => x.Value))
 				{
 					MethodReference ctor;
 					CustomAttributeArgument[] args;
@@ -350,8 +356,7 @@ namespace Mason.Core
 
 						args = new CustomAttributeArgument[]
 						{
-							new(str, source.DependencyGUID),
-							new(str, source.MinimumVersion.ToString())
+							new(str, source.DependencyGUID), new(str, source.MinimumVersion.ToString())
 						};
 					}
 					else
@@ -365,17 +370,17 @@ namespace Mason.Core
 						};
 					}
 
-					var dest = new CustomAttribute(_module.ImportReference(ctor));
+					CustomAttribute dest = new(_module.ImportReference(ctor));
 					dest.ConstructorArguments.AddRange(args);
 
 					attr.Add(dest);
 				}
 
-				foreach (var source in metadata.Incompatibilities.OrEmptyIfNull())
+				foreach (BepInIncompatibility source in metadata.Incompatibilities.OrEmptyIfNull())
 				{
-					var dest = new CustomAttribute(_module.ImportReference(refs.BepInIncompatibilityCtor));
+					CustomAttribute dest = new(_module.ImportReference(refs.BepInIncompatibilityCtor));
 
-					dest.ConstructorArguments.Add(new(str, source.IncompatibilityGUID));
+					dest.ConstructorArguments.Add(new CustomAttributeArgument(str, source.IncompatibilityGUID));
 
 					attr.Add(dest);
 				}
@@ -393,14 +398,14 @@ namespace Mason.Core
 
 			private class CgCache
 			{
-				public TypeDefinition Type { get; }
-				public FieldReference Cache { get; }
-
 				public CgCache(TypeDefinition type, FieldReference cache)
 				{
 					Type = type;
 					Cache = cache;
 				}
+
+				public TypeDefinition Type { get; }
+				public FieldReference Cache { get; }
 			}
 		}
 	}

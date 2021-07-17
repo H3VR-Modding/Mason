@@ -9,11 +9,11 @@ namespace Mason.Core.Globbing
 		{
 			yield return directory;
 
-			foreach (var item in Directory.GetFiles(directory))
+			foreach (string item in Directory.GetFiles(directory))
 				yield return item;
 
-			foreach (var item in Directory.GetDirectories(directory))
-			foreach (var subitem in Globstar(item))
+			foreach (string item in Directory.GetDirectories(directory))
+			foreach (string subitem in Globstar(item))
 				yield return subitem;
 		}
 

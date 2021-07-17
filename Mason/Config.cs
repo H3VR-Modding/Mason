@@ -5,10 +5,17 @@ namespace Mason.Standalone
 {
 	internal class Config
 	{
-		private static string ResolvePath(string directory, string path) =>
-			Path.IsPathRooted(path) ? path : Path.Combine(directory, path);
+		private static string ResolvePath(string directory, string path)
+		{
+			return Path.IsPathRooted(path) ? path : Path.Combine(directory, path);
+		}
 
 		public DirectoriesNode Directories { get; set; }
+
+		public void ResolvePaths(string directory)
+		{
+			Directories.ResolvePaths(directory);
+		}
 
 		public class DirectoriesNode
 		{
@@ -21,7 +28,5 @@ namespace Mason.Standalone
 				Managed = ResolvePath(directory, Managed);
 			}
 		}
-
-		public void ResolvePaths(string directory) => Directories.ResolvePaths(directory);
 	}
 }

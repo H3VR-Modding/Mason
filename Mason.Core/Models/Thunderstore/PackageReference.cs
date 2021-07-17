@@ -15,21 +15,30 @@ namespace Mason.Core.Thunderstore
 			Version = version;
 		}
 
-		public bool Equals(PackageReference other) => Author == other.Author && Name == other.Name && Version.Equals(other.Version);
+		public bool Equals(PackageReference other)
+		{
+			return Author == other.Author && Name == other.Name && Version.Equals(other.Version);
+		}
 
-		public override bool Equals(object? obj) => obj is PackageReference other && Equals(other);
+		public override bool Equals(object? obj)
+		{
+			return obj is PackageReference other && Equals(other);
+		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				var hashCode = Author.GetHashCode();
+				int hashCode = Author.GetHashCode();
 				hashCode = (hashCode * 397) ^ Name.GetHashCode();
 				hashCode = (hashCode * 397) ^ Version.GetHashCode();
 				return hashCode;
 			}
 		}
 
-		public override string ToString() => Author + "-" + Name + "-" + Version.ToString(3);
+		public override string ToString()
+		{
+			return Author + "-" + Name + "-" + Version.ToString(3);
+		}
 	}
 }

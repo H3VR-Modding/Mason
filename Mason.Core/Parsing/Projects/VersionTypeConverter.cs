@@ -8,7 +8,10 @@ namespace Mason.Core.Parsing.Projects
 {
 	internal class VersionTypeConverter : IYamlTypeConverter
 	{
-		public bool Accepts(Type type) => type == typeof(Version);
+		public bool Accepts(Type type)
+		{
+			return type == typeof(Version);
+		}
 
 		public object ReadYaml(IParser parser, Type type)
 		{
@@ -17,6 +20,9 @@ namespace Mason.Core.Parsing.Projects
 			return new Version(scalar.Value);
 		}
 
-		public void WriteYaml(IEmitter emitter, object? value, Type type) => throw new NotSupportedException();
+		public void WriteYaml(IEmitter emitter, object? value, Type type)
+		{
+			throw new NotSupportedException();
+		}
 	}
 }

@@ -9,13 +9,13 @@ namespace Mason.Core.IR
 
 		public Assets? Optimize()
 		{
-			var setup = Setup?.Optimize();
-			var runtime = Runtime?.Optimize();
+			IList<Asset>? setup = Setup?.Optimize();
+			AssetPipeline? runtime = Runtime?.Optimize();
 
 			if (setup is null && runtime is null)
 				return null;
 
-			return new()
+			return new Assets
 			{
 				Setup = setup,
 				Runtime = runtime

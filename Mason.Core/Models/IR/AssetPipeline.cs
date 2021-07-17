@@ -15,7 +15,7 @@ namespace Mason.Core.IR
 			if (Assets.Count > 0)
 				return this;
 
-			var buffer = Nested
+			List<AssetPipeline> buffer = Nested
 				.Select(x => x.Optimize())
 				.WhereNotNull()
 				.ToList();

@@ -6,20 +6,25 @@ namespace Mason.Core.Parsing.Thunderstore
 {
 	internal class MarkedConverter : JsonConverter
 	{
-		public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) => throw new NotSupportedException();
+		public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+		{
+			throw new NotSupportedException();
+		}
 
 		public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
 		{
 			var info = reader as IJsonLineInfo;
 
-			var start = info?.GetIndex() ?? default;
-			var value = serializer.Deserialize(reader, objectType.GetGenericArguments()[0]);
-			var end = info?.GetIndex() ?? default;
+			MarkupIndex start = info?.GetIndex() ?? default;
+			object? value = serializer.Deserialize(reader, objectType.GetGenericArguments()[0]);
+			MarkupIndex end = info?.GetIndex() ?? default;
 
 			return Activator.CreateInstance(objectType, value, new MarkupRange(start, end));
 		}
 
-		public override bool CanConvert(Type objectType) =>
-			objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(Marked<>);
+		public override bool CanConvert(Type objectType)
+		{
+			return objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(Marked<>);
+		}
 	}
 }

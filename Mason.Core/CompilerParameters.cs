@@ -4,6 +4,12 @@ namespace Mason.Core
 {
 	public class CompilerParameters : IHasBinaryPaths
 	{
+		public CompilerParameters(string managedDirectory, string bepInExDirectory)
+		{
+			ManagedDirectory = managedDirectory;
+			BepInExDirectory = bepInExDirectory;
+		}
+
 		public string ManagedDirectory { get; }
 
 		public string BepInExDirectory { get; }
@@ -14,12 +20,8 @@ namespace Mason.Core
 		string IHasBinaryPaths.SystemCore => Path.Combine(ManagedDirectory, "System.Core.dll");
 		string IHasBinaryPaths.UnityEngine => Path.Combine(ManagedDirectory, "UnityEngine.dll");
 		string IHasBinaryPaths.BepInEx => Path.Combine(Path.Combine(BepInExDirectory, "core"), "BepInEx.dll");
-		string IHasBinaryPaths.Stratum => Path.Combine(Path.Combine(Path.Combine(BepInExDirectory, "plugins"), StratumPackage), "Stratum.dll");
 
-		public CompilerParameters(string managedDirectory, string bepInExDirectory)
-		{
-			ManagedDirectory = managedDirectory;
-			BepInExDirectory = bepInExDirectory;
-		}
+		string IHasBinaryPaths.Stratum =>
+			Path.Combine(Path.Combine(Path.Combine(BepInExDirectory, "plugins"), StratumPackage), "Stratum.dll");
 	}
 }

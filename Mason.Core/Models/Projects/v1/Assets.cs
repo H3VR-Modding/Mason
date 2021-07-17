@@ -3,6 +3,6 @@
 	internal class Assets
 	{
 		public Asset[]? Setup { get; set; }
-		public AssetPipeline?  Runtime { get; set; }
+		public AssetPipeline? Runtime { get; set; }
 	}
 }

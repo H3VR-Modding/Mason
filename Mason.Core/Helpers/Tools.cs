@@ -5,17 +5,17 @@ namespace Mason.Core
 {
 	public static class Tools
 	{
-		public static string? RelativePath(string @from, string to)
+		public static string? RelativePath(string from, string to)
 		{
-			var builder = new StringBuilder(Path.GetFileName(to));
-			var parent = Path.GetDirectoryName(to);
+			StringBuilder builder = new(Path.GetFileName(to));
+			string? parent = Path.GetDirectoryName(to);
 
 			while (parent is not null)
 			{
-				if (parent == @from)
+				if (parent == from)
 					return builder.ToString();
 
-				var name = Path.GetFileName(parent);
+				string name = Path.GetFileName(parent);
 
 				builder
 					.Insert(0, '/')
