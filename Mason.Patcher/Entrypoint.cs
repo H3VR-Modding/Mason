@@ -51,7 +51,7 @@ namespace Mason.Patcher
 					continue;
 				}
 
-				if (output is null)
+				if (output == null)
 					continue;
 
 				if (!output.MatchSuccess(out MarkupMessage? error, out PackageReference? package))

@@ -62,7 +62,7 @@ namespace Mason.Core
 			{
 				get
 				{
-					if (_cg is null)
+					if (_cg == null)
 					{
 						TypeReference @void = _module.TypeSystem.Void;
 
@@ -138,7 +138,7 @@ namespace Mason.Core
 
 			private void EmitStartCoroutineReference(ILProcessor il)
 			{
-				if (_coroutineCache is null)
+				if (_coroutineCache == null)
 				{
 					// First call
 
@@ -159,7 +159,7 @@ namespace Mason.Core
 
 			private void EmitStartCoroutineReferenceLast(ILProcessor il)
 			{
-				if (_coroutineCache is null)
+				if (_coroutineCache == null)
 					// No need to store the last call
 					EmitStartCoroutineNewobj(il);
 				else
@@ -260,7 +260,7 @@ namespace Mason.Core
 				ILProcessor il = method.Body.GetILProcessor();
 				IList<Asset>? assets = _mod.Assets?.Setup;
 
-				if (assets is not null)
+				if (assets != null)
 				{
 					EmitAssetPipelineCtor(il, generics);
 
@@ -288,7 +288,7 @@ namespace Mason.Core
 				ILProcessor il = method.Body.GetILProcessor();
 				AssetPipeline? pipeline = _mod.Assets?.Runtime;
 
-				if (pipeline is not null)
+				if (pipeline != null)
 				{
 					EmitAssetPipelineCtor(il, generics);
 

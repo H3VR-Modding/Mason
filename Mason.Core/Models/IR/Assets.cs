@@ -12,7 +12,7 @@ namespace Mason.Core.IR
 			IList<Asset>? setup = Setup?.Optimize();
 			AssetPipeline? runtime = Runtime?.Optimize();
 
-			if (setup is null && runtime is null)
+			if (setup == null && runtime == null)
 				return null;
 
 			return new Assets

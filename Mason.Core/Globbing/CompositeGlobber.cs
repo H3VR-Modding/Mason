@@ -34,7 +34,7 @@ namespace Mason.Core.Globbing
 					directories = directories.SelectMany(d => globC(d)).Where(Directory.Exists);
 				}
 
-			return glob is null ? directories : directories.SelectMany(d => glob(d));
+			return glob == null ? directories : directories.SelectMany(d => glob(d));
 		}
 	}
 }

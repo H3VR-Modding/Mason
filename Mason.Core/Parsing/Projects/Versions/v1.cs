@@ -40,7 +40,7 @@ namespace Mason.Core.Parsing.Projects.v1
 			Metadata meta;
 			{
 				string? author = manifest.Author?.Value;
-				if (author is null)
+				if (author == null)
 				{
 					string full = Path.GetFullPath(directory); // We might be given a relative path (e.g. ".", "../") which can't be split
 					string[] split = Path.GetFileName(full).Split('-');
@@ -90,7 +90,7 @@ namespace Mason.Core.Parsing.Projects.v1
 			}
 
 			Dependencies? dependencies = template.Dependencies;
-			if (dependencies is not null)
+			if (dependencies != null)
 				meta.Dependencies = ToIR(dependencies);
 
 			return new Mod(meta)
@@ -105,14 +105,14 @@ namespace Mason.Core.Parsing.Projects.v1
 
 			{
 				Dictionary<string, Marked<Version>>? hard = dependencies.Hard;
-				if (hard is not null)
+				if (hard != null)
 					foreach ((string guid, Marked<Version> version) in hard)
 						total.Add(new Marked<BepInDependency>(new BepInDependency(guid, version.Value.ToString()), version.Range));
 			}
 
 			{
 				Marked<string>[]? soft = dependencies.Soft;
-				if (soft is not null)
+				if (soft != null)
 					foreach (Marked<string> guid in soft)
 						total.Add(new Marked<BepInDependency>(
 							new BepInDependency(guid.Value, BepInDependency.DependencyFlags.SoftDependency), guid.Range));
@@ -150,11 +150,11 @@ namespace Mason.Core.Parsing.Projects.v1
 			};
 
 			Core.Projects.v1.Asset[]? assets = pipeline.Assets;
-			if (assets is not null)
+			if (assets != null)
 				ret.Assets = ToIR(assets, root, output);
 
 			Core.Projects.v1.AssetPipeline[]? nested = pipeline.Nested;
-			if (nested is not null)
+			if (nested != null)
 				ret.Nested = Array.ConvertAll(nested, x => ToIR(x, root, output));
 
 			return ret;
@@ -166,13 +166,13 @@ namespace Mason.Core.Parsing.Projects.v1
 
 			{
 				Core.Projects.v1.Asset[]? setup = source.Setup;
-				if (setup is not null)
+				if (setup != null)
 					assets.Setup = ToIR(setup, root, output);
 			}
 
 			{
 				Core.Projects.v1.AssetPipeline? runtime = source.Runtime;
-				if (runtime is not null)
+				if (runtime != null)
 					assets.Runtime = ToIR(runtime, root, output);
 			}
 

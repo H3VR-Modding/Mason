@@ -26,7 +26,7 @@ namespace Mason.Core
 
 		public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> @this)
 		{
-			return @this.Where(x => x is not null)!;
+			return @this.Where(x => x != null)!;
 		}
 
 		public static IList<T>? Optimize<T>(this IList<T> @this)

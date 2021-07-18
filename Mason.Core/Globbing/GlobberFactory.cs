@@ -64,7 +64,7 @@ namespace Mason.Core.Globbing
 			{
 				Globber? globber = FromSegment(split[i]);
 
-				if (globber is not null)
+				if (globber != null)
 					globbers.Add(globber);
 			}
 
@@ -75,7 +75,7 @@ namespace Mason.Core.Globbing
 					{ } name => FromSegment(name)
 				};
 
-				if (globber is not null)
+				if (globber != null)
 					globbers.Add(globber);
 			}
 
@@ -96,7 +96,7 @@ namespace Mason.Core.Globbing
 		public IEnumerable<string> Glob(string directory, string path)
 		{
 			Globber? glob = Create(path);
-			if (glob is null)
+			if (glob == null)
 			{
 				yield return directory;
 				yield break;
@@ -172,7 +172,7 @@ namespace Mason.Core.Globbing
 			/// <summary>
 			///     Whether or not this entry is allowed. If it is not, then paths utilizing this will throw an exception.
 			/// </summary>
-			public bool IsAllowed => Replacement is not null;
+			public bool IsAllowed => Replacement != null;
 
 			/// <summary>
 			///     The filter to compare handle names to

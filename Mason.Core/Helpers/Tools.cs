@@ -10,7 +10,7 @@ namespace Mason.Core
 			StringBuilder builder = new(Path.GetFileName(to));
 			string? parent = Path.GetDirectoryName(to);
 
-			while (parent is not null)
+			while (parent != null)
 			{
 				if (parent == from)
 					return builder.ToString();

@@ -26,7 +26,7 @@ namespace Mason.Core.Parsing.Projects
 			{
 				MarkupRange? range = null;
 
-				if (c is null)
+				if (c == null)
 					range = new MarkupRange(default, lastIndex);
 				else if (c is not Scalar {Value: tagName})
 					range = c.GetRange();
@@ -54,7 +54,7 @@ namespace Mason.Core.Parsing.Projects
 				{
 					c = project.Current;
 
-					if (c is null)
+					if (c == null)
 						range = new MarkupRange(lastIndex, lastIndex);
 					else if (c is not Scalar value || !byte.TryParse(value.Value, out numeric))
 						range = c.GetRange();
@@ -80,7 +80,7 @@ namespace Mason.Core.Parsing.Projects
 			project.MoveNext();
 
 			Mod? ret = version.Parse(manifest, manifestFile, new SliceParser(project), projectFile, directory, output);
-			if (ret is null)
+			if (ret == null)
 				return ret;
 
 			project.Consume<MappingEnd>();
@@ -90,7 +90,7 @@ namespace Mason.Core.Parsing.Projects
 				c = project.Current;
 
 				MarkupRange? range = null;
-				if (c is null)
+				if (c == null)
 					range = new MarkupRange(lastIndex, lastIndex);
 				else if (c is not StreamEnd)
 					range = c.GetRange();

@@ -175,14 +175,14 @@ namespace Mason.Core
 
 				Marked<string> name = manifest.Name;
 				ICompilerOutput? earlyRet = Validate(name, "Name");
-				if (earlyRet is not null)
+				if (earlyRet != null)
 					return earlyRet;
 
 				Marked<string>? author = manifest.Author;
 				if (author.HasValue)
 				{
 					earlyRet = Validate(author.Value, "Author");
-					if (earlyRet is not null)
+					if (earlyRet != null)
 						return earlyRet;
 				}
 			}
@@ -193,7 +193,7 @@ namespace Mason.Core
 				MergingParser parser = new(new Parser(text));
 
 				Mod? irBuffer = _parser.Parse(manifest, manifestFile, parser, projectFile, projectDirectory, output);
-				if (irBuffer is null)
+				if (irBuffer == null)
 					return output;
 				ir = irBuffer;
 			}

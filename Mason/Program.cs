@@ -87,7 +87,7 @@ namespace Mason.Standalone
 		private static async Task Write(Stream content, string dest)
 		{
 			string? directory = Path.GetDirectoryName(dest);
-			if (directory is not null)
+			if (directory != null)
 				Directory.CreateDirectory(directory);
 
 			await using FileStream file = File.Create(dest);
@@ -229,7 +229,7 @@ namespace Mason.Standalone
 			Console.WriteLine("Constructed compiler");
 
 			output = compiler.Compile(_dir, buffer);
-			if (output is null)
+			if (output == null)
 			{
 				if (compiler.ProjectPath is { } project)
 					Error(MarkupMessage.Path(project, "Cannot compile Mason project without project file"));
