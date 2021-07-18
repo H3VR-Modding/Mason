@@ -7,8 +7,8 @@ namespace Mason.Core.Thunderstore
 	internal class Manifest
 	{
 		[JsonConstructor]
-		public Manifest(string? author, Marked<string> name, Version versionNumber, PackageReference[] dependencies, string description,
-			string websiteUrl)
+		public Manifest(Marked<string>? author, Marked<string> name, Version versionNumber, PackageReference[] dependencies,
+			string description, string websiteUrl)
 		{
 			Author = author;
 			Name = name;
@@ -19,7 +19,7 @@ namespace Mason.Core.Thunderstore
 		}
 
 		[JsonProperty(Required = Required.Default)]
-		public string? Author { get; }
+		public Marked<string>? Author { get; }
 
 		public Marked<string> Name { get; }
 		public Version VersionNumber { get; }

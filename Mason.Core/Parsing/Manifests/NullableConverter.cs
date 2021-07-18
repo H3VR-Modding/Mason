@@ -1,10 +1,9 @@
 using System;
-using Mason.Core.Markup;
 using Newtonsoft.Json;
 
 namespace Mason.Core.Parsing.Thunderstore
 {
-	internal class MarkedConverter : JsonConverter
+	public class NullableConverter : JsonConverter
 	{
 		public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
 		{
@@ -13,19 +12,17 @@ namespace Mason.Core.Parsing.Thunderstore
 
 		public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
 		{
-			var info = reader as IJsonLineInfo;
+			if (reader.TokenType == JsonToken.Null)
+				return Activator.CreateInstance(objectType);
+
 			Type valueType = objectType.GetGenericArguments()[0];
-
-			MarkupIndex start = info?.GetIndex() ?? default;
 			object? value = serializer.Deserialize(reader, valueType);
-			MarkupIndex end = info?.GetIndex() ?? default;
-
-			return Activator.CreateInstance(objectType, value, new MarkupRange(start, end));
+			return Activator.CreateInstance(objectType, value);
 		}
 
 		public override bool CanConvert(Type objectType)
 		{
-			return objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(Marked<>);
+			return objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(Nullable<>);
 		}
 	}
 }

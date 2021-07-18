@@ -39,7 +39,7 @@ namespace Mason.Core.Parsing.Projects.v1
 		{
 			Metadata meta;
 			{
-				string? author = manifest.Author;
+				string? author = manifest.Author?.Value;
 				if (author is null)
 				{
 					string full = Path.GetFullPath(directory); // We might be given a relative path (e.g. ".", "../") which can't be split
@@ -60,6 +60,12 @@ namespace Mason.Core.Parsing.Projects.v1
 					}
 
 					author = split[0];
+					if (!Compiler.ComponentRegex.IsMatch(author))
+					{
+						output.Failure(MarkupMessage.Path(directory, "Author (inferred by directory) may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
+						return null;
+					}
+
 					output.Warnings.Add(MarkupMessage.Path(manifestFile,
 						"The author of the mod was infered by the directory name. Consider adding an 'author' property."));
 				}

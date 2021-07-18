@@ -28,7 +28,8 @@ namespace Mason.Core
 		};
 
 		private static readonly Version MinimumStratumVersion = new(1, 0, 0);
-		private static readonly Regex NameRegex = new("^[a-zA-Z0-9_]+$");
+
+		internal static readonly Regex ComponentRegex = new("^[a-zA-Z0-9](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$");
 
 		private static IAssemblyResolver CreateResolver(CompilerParameters parameters)
 		{
@@ -61,7 +62,7 @@ namespace Mason.Core
 		{
 			Converters = new JsonConverter[]
 			{
-				new PackageReferenceConverter(), new MarkedConverter()
+				new PackageReferenceConverter(), new MarkedConverter(), new NullableConverter()
 			},
 			ContractResolver = new DefaultContractResolver
 			{
@@ -163,15 +164,27 @@ namespace Mason.Core
 					return output;
 				}
 
-				Marked<string> name = manifest.Name;
-				if (!NameRegex.IsMatch(name.Value))
+				ICompilerOutput? Validate(Marked<string> component, string name)
 				{
-					output.Failure(MarkupMessage.File(manifestFile, name.Range, "Names may only contain the characters a-z A-Z 0-9 _"));
+					if (ComponentRegex.IsMatch(component.Value))
+						return null;
+
+					output.Failure(MarkupMessage.File(manifestFile, component.Range, $"{name} may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
 					return output;
 				}
 
-				// We don't validate author because we cannot ensure the author in the file is the same as the uploader, + author is an
-				// r2mm property, not TS
+				Marked<string> name = manifest.Name;
+				ICompilerOutput? earlyRet = Validate(name, "Name");
+				if (earlyRet is not null)
+					return earlyRet;
+
+				Marked<string>? author = manifest.Author;
+				if (author.HasValue)
+				{
+					earlyRet = Validate(author.Value, "Author");
+					if (earlyRet is not null)
+						return earlyRet;
+				}
 			}
 
 			Mod ir;
