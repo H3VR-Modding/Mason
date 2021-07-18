@@ -86,6 +86,10 @@ namespace Mason.Standalone
 
 		private static async Task Write(Stream content, string dest)
 		{
+			string? directory = Path.GetDirectoryName(dest);
+			if (directory is not null)
+				Directory.CreateDirectory(directory);
+
 			await using FileStream file = File.Create(dest);
 			Console.WriteLine("Acquired output file");
 
