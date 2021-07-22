@@ -2,22 +2,22 @@
 
 namespace Mason.Core.Thunderstore
 {
-	public readonly struct PackageReference : IEquatable<PackageReference>
+	public class PackageReference : IEquatable<PackageReference>
 	{
-		public string Author { get; }
-		public string Name { get; }
-		public Version Version { get; }
-
-		public PackageReference(string author, string name, Version version)
+		public PackageReference(PackageComponentString author, PackageComponentString name, SimpleSemVersion version)
 		{
 			Author = author;
 			Name = name;
 			Version = version;
 		}
 
+		public PackageComponentString Author { get; }
+		public PackageComponentString Name { get; }
+		public SimpleSemVersion Version { get; }
+
 		public bool Equals(PackageReference other)
 		{
-			return Author == other.Author && Name == other.Name && Version.Equals(other.Version);
+			return Author == other.Author && Name == other.Name && Version == other.Version;
 		}
 
 		public override bool Equals(object? obj)
@@ -38,7 +38,7 @@ namespace Mason.Core.Thunderstore
 
 		public override string ToString()
 		{
-			return Author + "-" + Name + "-" + Version.ToString(3);
+			return Author + "-" + Name + "-" + Version;
 		}
 	}
 }

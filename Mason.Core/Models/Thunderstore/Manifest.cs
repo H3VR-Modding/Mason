@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Mason.Core.Thunderstore
@@ -8,8 +7,8 @@ namespace Mason.Core.Thunderstore
 	public class Manifest
 	{
 		[JsonConstructor]
-		public Manifest(Marked<string>? author, Marked<string> name, Version versionNumber, List<PackageReference> dependencies,
-			string description, string websiteUrl)
+		public Manifest(Marked<PackageComponentString>? author, Marked<PackageComponentString> name, SimpleSemVersion versionNumber,
+			List<PackageReference> dependencies, DescriptionString description, string websiteUrl)
 		{
 			Author = author;
 			Name = name;
@@ -20,12 +19,12 @@ namespace Mason.Core.Thunderstore
 		}
 
 		[JsonProperty(Required = Required.Default)]
-		public Marked<string>? Author { get; set; }
+		public Marked<PackageComponentString>? Author { get; set; }
 
-		public Marked<string> Name { get; set; }
-		public Version VersionNumber { get; set; }
+		public Marked<PackageComponentString> Name { get; set; }
+		public SimpleSemVersion VersionNumber { get; set; }
 		public List<PackageReference> Dependencies { get; }
-		public string Description { get; set; }
+		public DescriptionString Description { get; set; }
 		public string WebsiteUrl { get; set; }
 	}
 }

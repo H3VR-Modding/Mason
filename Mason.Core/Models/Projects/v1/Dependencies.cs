@@ -5,7 +5,9 @@ namespace Mason.Core.Projects.v1
 {
 	internal class Dependencies
 	{
-		public Dictionary<string, Marked<Version>>? Hard { get; set; }
-		public Marked<string>[]? Soft { get; set; }
+		// Even though we have SimpleSemVersion, plugins use System.Version
+		// Hopefully, all plugins use semver, but we cannot assume that
+		public Dictionary<GuidString, Marked<Version>>? Hard { get; set; }
+		public List<Marked<GuidString>>? Soft { get; set; }
 	}
 }

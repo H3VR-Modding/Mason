@@ -31,7 +31,7 @@ namespace Mason.Core.Parsing.Projects.v1
 			box.Value = _deserializer = new DeserializerBuilder()
 				.WithNamingConvention(UnderscoredNamingConvention.Instance)
 				.WithTypeConverter(new MarkedTypeConverter(box))
-				.WithTypeConverter(new VersionTypeConverter())
+				.WithTypeConverter(new GuidStringTypeConverter())
 				.Build();
 		}
 
@@ -81,7 +81,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				return new ParserOutput(mod, _warnings, _referencedPaths);
 			}
 
-			private string GetAuthor()
+			private PackageComponentString GetAuthor()
 			{
 				// Full path because we might be given a relative path (e.g. ".", "../") which can't be split
 				string full = Path.GetFullPath(_project.Directory);
@@ -90,13 +90,12 @@ namespace Mason.Core.Parsing.Projects.v1
 					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
 						"The author property must be present, or the directory must be named [author]-[name]."));
 
-				Marked<string> name = _project.Manifest.Name;
+				Marked<PackageComponentString> name = _project.Manifest.Name;
 				if (split[1] != name.Value)
 					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
 						$"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
 
-				string author = split[0];
-				if (!Compiler.ComponentRegex.IsMatch(author))
+				if (PackageComponentString.TryParse(split[0]) is not { } author)
 					throw new CompilerException(MarkupMessage.Path(_project.Directory,
 						"Author (inferred by directory) may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
 
@@ -110,25 +109,28 @@ namespace Mason.Core.Parsing.Projects.v1
 			{
 				Manifest manifest = _project.Manifest;
 
-				string author = manifest.Author?.Value ?? GetAuthor();
-				string name = manifest.Name.Value;
-				Version version = manifest.VersionNumber;
-				string guid = author + "-" + name;
+				PackageComponentString author = manifest.Author?.Value ?? GetAuthor();
+				PackageComponentString name = manifest.Name.Value;
+				SimpleSemVersion version = manifest.VersionNumber;
 
-				return new Metadata(new BepInPlugin(guid, name, version.ToString()), new PackageReference(author, name, version));
+				BepInPlugin plugin = new(author + "-" + name, name, version.ToString());
+				PackageReference package = new(author, name, version);
+
+
+				return new Metadata(plugin, package);
 			}
 
 			private IList<BepInDependency> DependenciesToIR(Dependencies dependencies)
 			{
 				List<BepInDependency> total = new();
-				HashSet<string> used = new();
+				HashSet<GuidString> used = new();
 
-				foreach ((string guid, Marked<Version> version) in dependencies.Hard.OrEmptyIfNull())
+				foreach ((GuidString guid, Marked<Version> version) in dependencies.Hard.OrEmptyIfNull())
 				{
 					if (guid == Compiler.StratumGUID)
 					{
 						Version? depVersion = version.Value;
-						switch (depVersion.GoodCompareTo(Compiler.MinimumStratumVersion))
+						switch (depVersion.CompareTo(Compiler.MinimumStratumVersion))
 						{
 							case 1:
 								_warnings.Add(MarkupMessage.File(_project.Path, version.Range,
@@ -152,9 +154,9 @@ namespace Mason.Core.Parsing.Projects.v1
 				used.Add(Compiler.StratumGUID);
 				total.Add(new BepInDependency(Compiler.StratumGUID, Compiler.MinimumStratumVersion.ToString()));
 
-				foreach (Marked<string> guid in dependencies.Soft.OrEmptyIfNull())
+				foreach (Marked<GuidString> guid in dependencies.Soft.OrEmptyIfNull())
 				{
-					string value = guid.Value;
+					GuidString value = guid.Value;
 					if (used.Contains(value))
 						throw new CompilerException(MarkupMessage.File(_project.Path, guid.Range,
 							"Soft dependency is already a hard dependency"));

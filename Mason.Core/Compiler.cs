@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Mason.Core.IR;
 using Mason.Core.Markup;
 using Mason.Core.Parsing.Projects;
@@ -19,7 +18,7 @@ namespace Mason.Core
 {
 	public class Compiler : IDisposable
 	{
-		internal const string StratumGUID = "stratum";
+		internal static readonly GuidString StratumGUID = GuidString.Parse("stratum");
 
 		public const string ResourcesDirectory = "resources";
 
@@ -28,14 +27,18 @@ namespace Mason.Core
 			"core", "patchers", "monomod", "plugins"
 		};
 
-		internal static readonly Regex ComponentRegex = new("^[a-zA-Z0-9](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$");
 		internal static readonly Version MinimumStratumVersion = new(1, 0, 0);
 
 		public static JsonSerializer ManifestSerializer { get; } = JsonSerializer.Create(new JsonSerializerSettings
 		{
 			Converters = new JsonConverter[]
 			{
-				new PackageReferenceConverter(), new MarkedConverter(), new NullableConverter()
+				new PackageReferenceConverter(),
+				new MarkedConverter(),
+				new NullableConverter(),
+				new PackageComponentStringConverter(),
+				new DescriptionStringConverter(),
+				new SimpleSemVersionConverter()
 			},
 			ContractResolver = new DefaultContractResolver
 			{
@@ -103,22 +106,6 @@ namespace Mason.Core
 			{
 				throw new CompilerException(MarkupMessage.File(file, e.GetIndex(), e.Message));
 			}
-
-			void Validate(Marked<string> component, string componentName)
-			{
-				if (ComponentRegex.IsMatch(component.Value))
-					return;
-
-				throw new CompilerException(MarkupMessage.File(file, component.Range,
-					$"{componentName} may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
-			}
-
-			Marked<string> name = manifest.Name;
-			Validate(name, "Name");
-
-			Marked<string>? author = manifest.Author;
-			if (author.HasValue)
-				Validate(author.Value, "Author");
 
 			return manifest;
 		}

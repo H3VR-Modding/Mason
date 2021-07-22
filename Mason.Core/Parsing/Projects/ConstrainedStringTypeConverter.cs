@@ -1,28 +1,29 @@
-﻿using System;
+using System;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
-using Version = System.Version;
 
 namespace Mason.Core.Parsing.Projects
 {
-	internal class VersionTypeConverter : IYamlTypeConverter
+	internal abstract class ConstrainedStringTypeConverter<T> : IYamlTypeConverter
 	{
 		public bool Accepts(Type type)
 		{
-			return type == typeof(Version);
+			return type == typeof(T);
 		}
 
-		public object ReadYaml(IParser parser, Type type)
+		public object? ReadYaml(IParser parser, Type type)
 		{
-			var scalar = parser.Consume<Scalar>();
+			string scalar = parser.Consume<Scalar>().Value;
 
-			return new Version(scalar.Value);
+			return Parse(scalar);
 		}
 
 		public void WriteYaml(IEmitter emitter, object? value, Type type)
 		{
 			throw new NotSupportedException();
 		}
+
+		protected abstract T Parse(string scalar);
 	}
 }
