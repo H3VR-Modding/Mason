@@ -211,7 +211,7 @@ namespace Mason.Standalone
 				}
 				Console.WriteLine("Added Thunderstore-required files");
 
-				AddResources(archive, pluginsPrefix, output.ReferencedPaths, compression);
+				await AddResources(archive, pluginsPrefix, output.ReferencedPaths, compression);
 				Console.WriteLine("Added resources");
 			}
 			backing.Position = 0;
