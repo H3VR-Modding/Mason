@@ -70,8 +70,9 @@ namespace Mason.Core.Parsing.Projects.v1
 					throw new CompilerException(MarkupMessage.File(_project.Path, e.GetRange(), e.Message), meta.Package);
 				}
 
-				if (yaml.Dependencies is { } dependencies)
-					meta.Dependencies = DependenciesToIR(dependencies);
+				meta.Dependencies = DependenciesToIR(yaml.Dependencies);
+				meta.Incompatibilities = IncompatibilitiesToIR(yaml.Incompatibilities);
+				meta.Processes = ProcessesToIR(yaml.Processes);
 
 				Mod mod = new(meta)
 				{
@@ -120,8 +121,11 @@ namespace Mason.Core.Parsing.Projects.v1
 				return new Metadata(plugin, package);
 			}
 
-			private IList<BepInDependency> DependenciesToIR(Dependencies dependencies)
+			private IList<BepInDependency>? DependenciesToIR(Dependencies? dependencies)
 			{
+				if (dependencies == null)
+					return null;
+
 				List<BepInDependency> total = new();
 				HashSet<GuidString> used = new();
 
@@ -165,6 +169,16 @@ namespace Mason.Core.Parsing.Projects.v1
 				}
 
 				return total;
+			}
+
+			private IList<BepInIncompatibility>? IncompatibilitiesToIR(List<GuidString>? incompatibilities)
+			{
+				return incompatibilities?.ConvertAll(guid => new BepInIncompatibility(guid));
+			}
+
+			private IList<BepInProcess>? ProcessesToIR(List<string>? processes)
+			{
+				return processes?.ConvertAll(process => new BepInProcess(process));
 			}
 
 			private IEnumerable<Asset> AssetToIR(Core.Projects.v1.Asset asset, string resources)
