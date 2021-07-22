@@ -26,10 +26,31 @@ namespace Mason.Standalone
 			catch (ExitException e)
 			{
 				if (e.Markup is { } markup)
-					Console.WriteLine(markup.ToString("error", RelativePath));
+					Error(markup);
 
 				return (int) e.Code;
 			}
+			catch (Exception e)
+			{
+				Error(MarkupMessage.Path(Environment.CurrentDirectory, "An unhandled exception occured: " + e));
+
+				return (int) ExitCode.Internal;
+			}
+		}
+
+		private static string RelativePath(string path)
+		{
+			return Path.GetRelativePath(Environment.CurrentDirectory, path);
+		}
+
+		private static void Warn(MarkupMessage markup)
+		{
+			Console.WriteLine(markup.ToString("warning", RelativePath));
+		}
+
+		private static void Error(MarkupMessage markup)
+		{
+			Console.WriteLine(markup.ToString("error", RelativePath));
 		}
 
 		private static Task MainSafe(string[] args)
@@ -109,16 +130,6 @@ namespace Mason.Standalone
 
 			await content.CopyToAsync(file);
 			Console.WriteLine("Wrote content to disk");
-		}
-
-		private static string RelativePath(string path)
-		{
-			return Path.GetRelativePath(Environment.CurrentDirectory, path);
-		}
-
-		private static void Warn(MarkupMessage markup)
-		{
-			Console.WriteLine(markup.ToString("warning", RelativePath));
 		}
 
 		private readonly Config _config;
