@@ -16,7 +16,7 @@ namespace Mason.Core.IR
 		public PackageReference Package { get; }
 
 		public IList<BepInProcess>? Processes { get; set; }
-		public IList<Marked<BepInDependency>>? Dependencies { get; set; }
+		public IList<BepInDependency>? Dependencies { get; set; }
 		public IList<BepInIncompatibility>? Incompatibilities { get; set; }
 
 		public Metadata Optimize()

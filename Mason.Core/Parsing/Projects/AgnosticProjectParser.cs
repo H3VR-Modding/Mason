@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using Mason.Core.IR;
 using Mason.Core.Markup;
-using Mason.Core.Thunderstore;
+using Mason.Core.Projects;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 
@@ -11,16 +10,17 @@ namespace Mason.Core.Parsing.Projects
 	{
 		public Dictionary<byte, IProjectParser> Versions { get; } = new();
 
-		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory,
-			CompilerOutput output)
+		public ParserOutput Parse(UnparsedProject project)
 		{
 			const string tagName = "version";
 
-			project.Consume<StreamStart>();
-			project.Consume<DocumentStart>();
-			var start = project.Consume<MappingStart>();
+			IParser parser = project.Parser;
 
-			ParsingEvent? c = project.Current;
+			parser.Consume<StreamStart>();
+			parser.Consume<DocumentStart>();
+			var start = parser.Consume<MappingStart>();
+
+			ParsingEvent? c = parser.Current;
 			MarkupIndex lastIndex = start.End.GetIndex();
 
 			{
@@ -34,11 +34,8 @@ namespace Mason.Core.Parsing.Projects
 					lastIndex = c.End.GetIndex();
 
 				if (range.HasValue)
-				{
-					output.Failure(MarkupMessage.File(projectFile, range.Value,
-						"Template files must begin with the '" + tagName + "' property."));
-					return null;
-				}
+					throw new CompilerException(MarkupMessage.File(project.Path, range.Value,
+						"Project files must begin with the '" + tagName + "' property"));
 			}
 
 			byte numeric = default;
@@ -46,13 +43,13 @@ namespace Mason.Core.Parsing.Projects
 			{
 				MarkupRange? range = null;
 
-				if (!project.MoveNext())
+				if (!parser.MoveNext())
 				{
 					range = new MarkupRange(lastIndex, lastIndex);
 				}
 				else
 				{
-					c = project.Current;
+					c = parser.Current;
 
 					if (c == null)
 						range = new MarkupRange(lastIndex, lastIndex);
@@ -63,31 +60,23 @@ namespace Mason.Core.Parsing.Projects
 				}
 
 				if (range.HasValue)
-				{
-					output.Failure(
-						MarkupMessage.File(projectFile, range.Value, "The '" + tagName + "' property must have a numeric value."));
-					return null;
-				}
+					throw new CompilerException(MarkupMessage.File(project.Path, range.Value,
+						"The '" + tagName + "' property must have a numeric value."));
 			}
 
 			if (!Versions.TryGetValue(numeric, out IProjectParser version))
-			{
-				output.Failure(MarkupMessage.File(projectFile, valueRange,
+				throw new CompilerException(MarkupMessage.File(project.Path, valueRange,
 					$"Version {numeric} is not supported by this version of Mason."));
-				return null;
-			}
 
-			project.MoveNext();
+			parser.MoveNext();
 
-			Mod? ret = version.Parse(manifest, manifestFile, new SliceParser(project), projectFile, directory, output);
-			if (ret == null)
-				return ret;
+			ParserOutput ret = version.Parse(project.WithParser(new SliceParser(parser)));
 
-			project.Consume<MappingEnd>();
-			lastIndex = project.Consume<DocumentEnd>().End.GetIndex();
+			parser.Consume<MappingEnd>();
+			lastIndex = parser.Consume<DocumentEnd>().End.GetIndex();
 
 			{
-				c = project.Current;
+				c = parser.Current;
 
 				MarkupRange? range = null;
 				if (c == null)
@@ -96,13 +85,11 @@ namespace Mason.Core.Parsing.Projects
 					range = c.GetRange();
 
 				if (range.HasValue)
-				{
-					output.Failure(MarkupMessage.File(projectFile, range.Value, "Project files may contain only one document."));
-					return null;
-				}
+					throw new CompilerException(
+						MarkupMessage.File(project.Path, range.Value, "Project files may contain only one document"));
 			}
 
-			project.MoveNext();
+			parser.MoveNext();
 
 			return ret;
 		}

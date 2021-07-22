@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using BepInEx;
 using Mason.Core.IR;
 using Mason.Core.Markup;
 using Mason.Core.Parsing.Projects;
 using Mason.Core.Parsing.Projects.v1;
 using Mason.Core.Parsing.Thunderstore;
+using Mason.Core.Projects;
 using Mason.Core.RefsAndDefs;
 using Mason.Core.Thunderstore;
 using Mono.Cecil;
@@ -18,18 +17,33 @@ using Version = System.Version;
 
 namespace Mason.Core
 {
-	public class Compiler
+	public class Compiler : IDisposable
 	{
-		private const string StratumGUID = "stratum";
+		internal const string StratumGUID = "stratum";
+
+		public const string ResourcesDirectory = "resources";
 
 		private static readonly string[] BepinexSystems =
 		{
 			"core", "patchers", "monomod", "plugins"
 		};
 
-		private static readonly Version MinimumStratumVersion = new(1, 0, 0);
-
 		internal static readonly Regex ComponentRegex = new("^[a-zA-Z0-9](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$");
+		internal static readonly Version MinimumStratumVersion = new(1, 0, 0);
+
+		public static JsonSerializer ManifestSerializer { get; } = JsonSerializer.Create(new JsonSerializerSettings
+		{
+			Converters = new JsonConverter[]
+			{
+				new PackageReferenceConverter(), new MarkedConverter(), new NullableConverter()
+			},
+			ContractResolver = new DefaultContractResolver
+			{
+				NamingStrategy = new SnakeCaseNamingStrategy()
+			},
+			ReferenceLoopHandling = ReferenceLoopHandling.Serialize // Without this, the NullableConverter causes a recursion exception
+			// (even though its not trying to serialize a nullable type)
+		});
 
 		private static IAssemblyResolver CreateResolver(CompilerParameters parameters)
 		{
@@ -58,18 +72,6 @@ namespace Mason.Core
 
 		private readonly IDisposable _refs;
 
-		private readonly JsonSerializer _serializer = JsonSerializer.Create(new JsonSerializerSettings
-		{
-			Converters = new JsonConverter[]
-			{
-				new PackageReferenceConverter(), new MarkedConverter(), new NullableConverter()
-			},
-			ContractResolver = new DefaultContractResolver
-			{
-				NamingStrategy = new SnakeCaseNamingStrategy()
-			}
-		});
-
 		public Compiler(CompilerParameters parameters)
 		{
 			IAssemblyResolver resolver = CreateResolver(parameters);
@@ -86,131 +88,84 @@ namespace Mason.Core
 			_generator = new Generator(resolver, refsOwner.Refs);
 		}
 
-		public string? ManifestPath { get; private set; }
-
-		public string? ProjectPath { get; private set; }
-
-		private bool AddStratumDependency(Metadata metadata, string projectFile, CompilerOutput output)
+		private Manifest ReadManifest(string file)
 		{
-			IList<Marked<BepInDependency>>? deps = metadata.Dependencies;
-			foreach (Marked<BepInDependency> dep in deps.OrEmptyIfNull())
+			using StreamReader text = new(file);
+			using JsonTextReader json = new(text);
+
+			Manifest manifest;
+			try
 			{
-				BepInDependency value = dep.Value;
-				if (value.DependencyGUID != StratumGUID)
-					continue;
-
-				if (!value.Flags.HasFlag(BepInDependency.DependencyFlags.HardDependency))
-				{
-					output.Failure(MarkupMessage.File(projectFile, dep.Range, "Stratum cannot be a soft dependency"));
-					return false;
-				}
-
-				Version? depVersion = value.MinimumVersion;
-				switch (depVersion.GoodCompareTo(MinimumStratumVersion))
-				{
-					case 1:
-						output.Warnings.Add(MarkupMessage.File(projectFile, dep.Range,
-							$"Stratum dependency with a minimum version ({depVersion}) greater than required ({MinimumStratumVersion})"));
-						return true;
-					case 0:
-						output.Warnings.Add(MarkupMessage.File(projectFile, dep.Range, "Redundant Stratum dependency"));
-						return true;
-					case -1:
-						output.Failure(MarkupMessage.File(projectFile, dep.Range,
-							$"Stratum dependency with a minimum version ({depVersion}) less than required ({MinimumStratumVersion})"));
-						return false;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
+				manifest = ManifestSerializer.Deserialize<Manifest>(json) ?? throw new CompilerException(MarkupMessage.File(file,
+					default(MarkupIndex), "Thunderstore manifest files cannot have a null body."));
+			}
+			catch (JsonSerializationException e)
+			{
+				throw new CompilerException(MarkupMessage.File(file, e.GetIndex(), e.Message));
 			}
 
-			deps = metadata.Dependencies = new List<Marked<BepInDependency>>();
-
+			void Validate(Marked<string> component, string componentName)
 			{
-				BepInDependency stratumDep = new(StratumGUID, MinimumStratumVersion.ToString());
+				if (ComponentRegex.IsMatch(component.Value))
+					return;
 
-				deps.Add(new Marked<BepInDependency>(stratumDep, default));
+				throw new CompilerException(MarkupMessage.File(file, component.Range,
+					$"{componentName} may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
 			}
 
-			return true;
+			Marked<string> name = manifest.Name;
+			Validate(name, "Name");
+
+			Marked<string>? author = manifest.Author;
+			if (author.HasValue)
+				Validate(author.Value, "Author");
+
+			return manifest;
 		}
 
-		public ICompilerOutput? Compile(string projectDirectory, Stream ret)
+		public CompilerOutput Compile(string projectDirectory)
 		{
 			if (!Directory.Exists(projectDirectory))
-				throw new DirectoryNotFoundException("Directory does not exist.");
+				throw new DirectoryNotFoundException("Project directory does not exist.");
 
-			string manifestFile = ManifestPath = Path.Combine(projectDirectory, "manifest.json");
+			string manifestFile = Path.Combine(projectDirectory, "manifest.json");
 			if (!File.Exists(manifestFile))
-				return null;
+				throw new FileNotFoundException("A Thunderstore manifest is required to compile a Mason mod", manifestFile);
 
-			string projectFile = ProjectPath = Path.Combine(projectDirectory, "project.yaml");
+			string projectFile = Path.Combine(projectDirectory, "project.yaml");
 			if (!File.Exists(projectFile))
-				return null;
+				throw new FileNotFoundException("A Mason project file is required to compile a Mason mod", projectFile);
 
-			CompilerOutput output = new();
-			Manifest manifest;
-			{
-				using StreamReader text = new(manifestFile);
-				using JsonTextReader json = new(text);
+			Manifest manifest = ReadManifest(manifestFile);
 
-				try
-				{
-					manifest = _serializer.Deserialize<Manifest>(json)!;
-				}
-				catch (JsonSerializationException e)
-				{
-					output.Failure(MarkupMessage.File(manifestFile, e.GetIndex(), e.Message));
-					return output;
-				}
-
-				ICompilerOutput? Validate(Marked<string> component, string name)
-				{
-					if (ComponentRegex.IsMatch(component.Value))
-						return null;
-
-					output.Failure(MarkupMessage.File(manifestFile, component.Range, $"{name} may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
-					return output;
-				}
-
-				Marked<string> name = manifest.Name;
-				ICompilerOutput? earlyRet = Validate(name, "Name");
-				if (earlyRet != null)
-					return earlyRet;
-
-				Marked<string>? author = manifest.Author;
-				if (author.HasValue)
-				{
-					earlyRet = Validate(author.Value, "Author");
-					if (earlyRet != null)
-						return earlyRet;
-				}
-			}
-
-			Mod ir;
+			ParserOutput parsed;
 			{
 				using StreamReader text = new(projectFile);
 				MergingParser parser = new(new Parser(text));
 
-				Mod? irBuffer = _parser.Parse(manifest, manifestFile, parser, projectFile, projectDirectory, output);
-				if (irBuffer == null)
-					return output;
-				ir = irBuffer;
+				UnparsedProject project = new(manifest, parser, projectDirectory, projectFile, manifestFile);
+				parsed = _parser.Parse(project);
 			}
 
-			if (!AddStratumDependency(ir.Metadata, projectFile, output))
-				return output;
+			Mod mod = parsed.Mod;
+			mod = mod.Optimize();
 
-			// TODO: check for stratum incompatibility
+			MemoryStream buffer = new();
+			try
+			{
+				_generator.Generate(mod).Write(buffer);
 
-			ir = ir.Optimize();
+				buffer.SetLength(buffer.Position);
+				buffer.Position = 0;
 
-			_generator.Generate(ir).Write(ret);
-			ret.Position = 0;
+				return new CompilerOutput(buffer, manifest, parsed);
+			}
+			catch
+			{
+				buffer.Dispose();
 
-			output.Success(ir.Metadata.Package);
-
-			return output;
+				throw;
+			}
 		}
 
 		public void Dispose()

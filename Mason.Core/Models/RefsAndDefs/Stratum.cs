@@ -13,23 +13,24 @@ namespace Mason.Core.RefsAndDefs
 			TypeDefinition stratumPlugin = stratum.GetType("Stratum.StratumPlugin");
 
 			StratumPluginType = stratumPlugin;
+			StratumPluginCtor = stratumPlugin.FindMethod("System.Void .ctor()");
 			StratumPluginDirectoriesGetter = stratumPlugin.FindProperty("Directories").GetMethod;
 
 			PluginDirectoriesResourcesGetter =
 				stratum.GetType("Stratum.PluginDirectories").Resolve().FindProperty("Resources").GetMethod;
 
 			TypeDefinition ext = stratum.GetType("Stratum.Jobs.ExtAssetPipeline");
-			AssetPipelineBuild = ext.FindMethod("Stratum.Jobs.Job`1<Stratum.Empty> Build(Stratum.Assets.AssetPipeline`1<Stratum.Empty>)");
+			AssetPipelineBuild = ext.FindMethod("Stratum.Jobs.Job`1<Stratum.Empty> Build(Stratum.Jobs.AssetPipeline`1<Stratum.Empty>)");
 			AssetPipelineBuildSequential =
 				ext.FindMethod(
-					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildSequential(Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>)");
+					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildSequential(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>)");
 			AssetPipelineBuildParallel =
 				ext.FindMethod(
-					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel(Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>,Stratum.Coroutines.CoroutineStarter)");
+					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,Stratum.CoroutineStarter)");
 			AssetPipelineAddNestedSequential = ext.FindMethod(
-				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedSequential(Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>>)");
+				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedSequential(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>>)");
 			AssetPipelineAddNestedParallel = ext.FindMethod(
-				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedParallel(Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Assets.AssetPipeline`1<System.Collections.IEnumerator>>,Stratum.Coroutines.CoroutineStarter)");
+				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedParallel(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>>,Stratum.CoroutineStarter)");
 
 			TypeDefinition coroutineStarter = stratum.GetType("Stratum.CoroutineStarter");
 			CoroutineStarterType = coroutineStarter;
@@ -45,6 +46,7 @@ namespace Mason.Core.RefsAndDefs
 		}
 
 		public TypeReference StratumPluginType { get; }
+		public MethodReference StratumPluginCtor { get; }
 		public MethodReference StratumPluginDirectoriesGetter { get; }
 
 		public MethodReference PluginDirectoriesResourcesGetter { get; }
@@ -65,13 +67,13 @@ namespace Mason.Core.RefsAndDefs
 
 		public readonly ref struct OpenGenericsTypes
 		{
-			public TypeReference AssetPipeline { get; }
+			public TypeDefinition AssetPipeline { get; }
 
-			public TypeReference IReadOnlyStageContext { get; }
+			public TypeDefinition IReadOnlyStageContext { get; }
 
-			public TypeReference IStageContextType { get; }
+			public TypeDefinition IStageContextType { get; }
 
-			public TypeReference Job { get; }
+			public TypeDefinition Job { get; }
 
 			public OpenGenericsTypes(ModuleDefinition stratum)
 			{
@@ -86,20 +88,22 @@ namespace Mason.Core.RefsAndDefs
 		{
 			public Generics(OpenGenericsTypes open, TypeReference tRet)
 			{
-				ClosedTypes closed = new(open, tRet);
-
-				AssetPipelineType = closed.AssetPipeline;
-				AssetPipelineCtor = closed.AssetPipeline.FindMethod("System.Void .ctor(System.IO.DirectoryInfo)");
+				AssetPipelineType = open.AssetPipeline.MakeGenericInstanceType(tRet);
+				AssetPipelineCtor = open.AssetPipeline.FindMethod("System.Void .ctor(System.IO.DirectoryInfo)")
+					.MakeHostInstanceGeneric(tRet);
 				AssetPipelineAddAssetMethod =
-					closed.AssetPipeline.FindMethod(
-						"Stratum.Assets.AssetPipeline`1<TRet> AddAsset(System.String,System.String,System.String)");
+					open.AssetPipeline.FindMethod(
+							"Stratum.Jobs.AssetPipeline`1<TRet> AddAsset(System.String,System.String,System.String)")
+						.MakeHostInstanceGeneric(tRet);
 
-				IReadOnlyStageContextStageGetter = closed.IReadOnlyStageContext.FindProperty("Stage").GetMethod;
+				IReadOnlyStageContextStageGetter = open.IReadOnlyStageContext.FindProperty("Stage").GetMethod
+					.MakeHostInstanceGeneric(tRet);
 
-				IStageContextType = closed.IStageContextType;
+				IStageContextType = open.IStageContextType.MakeGenericInstanceType(tRet);
 
 				JobInvokeMethod =
-					closed.Job.FindMethod("Stratum.Jobs.Job`1/TRet Invoke(Stratum.IStage`1<TRet>,BepInEx.Logging.ManualLogSource)");
+					open.Job.FindMethod("Stratum.Jobs.Job`1/TRet Invoke(Stratum.IStage`1<TRet>,BepInEx.Logging.ManualLogSource)")
+						.MakeHostInstanceGeneric(tRet);
 			}
 
 			public TypeReference AssetPipelineType { get; }
@@ -111,25 +115,6 @@ namespace Mason.Core.RefsAndDefs
 			public TypeReference IStageContextType { get; }
 
 			public MethodReference JobInvokeMethod { get; }
-
-			private readonly ref struct ClosedTypes
-			{
-				public TypeDefinition AssetPipeline { get; }
-
-				public TypeDefinition IReadOnlyStageContext { get; }
-
-				public TypeDefinition IStageContextType { get; }
-
-				public TypeDefinition Job { get; }
-
-				public ClosedTypes(OpenGenericsTypes open, TypeReference t)
-				{
-					AssetPipeline = open.AssetPipeline.MakeGenericInstanceType(t).Resolve();
-					IReadOnlyStageContext = open.IReadOnlyStageContext.MakeGenericInstanceType(t).Resolve();
-					IStageContextType = open.IStageContextType.MakeGenericInstanceType(t).Resolve();
-					Job = open.Job.MakeGenericInstanceType(t).Resolve();
-				}
-			}
 		}
 	}
 }

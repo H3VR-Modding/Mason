@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Mason.Core.Markup;
 using Newtonsoft.Json;
 
@@ -8,7 +9,13 @@ namespace Mason.Core.Parsing.Thunderstore
 	{
 		public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
 		{
-			throw new NotSupportedException();
+			// Nullability ignored: value must be a struct (Marked<T>)
+			Type type = value!.GetType();
+			Type valueType = type.GetGenericArguments()[0];
+			MethodInfo valueGetter = type.GetProperty(nameof(Marked<object>.Value))!.GetGetMethod();
+
+			object valueValue = valueGetter.Invoke(value, new object[0]);
+			serializer.Serialize(writer, valueValue, valueType);
 		}
 
 		public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)

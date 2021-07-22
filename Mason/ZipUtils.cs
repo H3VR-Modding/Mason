@@ -7,6 +7,9 @@ namespace Mason.Standalone
 {
 	internal static class ZipUtils
 	{
+		public static int ExternalAttributes = (int) (UnixPermissions.UserRead | UnixPermissions.UserWrite | UnixPermissions.GroupRead |
+		                                            UnixPermissions.GroupWrite | UnixPermissions.OtherRead) << 16;
+
 		private static void Shrink(this StringBuilder @this, int length)
 		{
 			@this.Remove(@this.Length - length, length);
@@ -16,6 +19,7 @@ namespace Mason.Standalone
 		{
 			ZipArchiveEntry entry = @this.CreateEntry(name, level);
 			entry.LastWriteTime = File.GetLastWriteTime(file);
+			entry.ExternalAttributes = ExternalAttributes;
 
 			using FileStream src = File.OpenRead(file);
 			using Stream dest = entry.Open();

@@ -6,6 +6,7 @@ using BepInEx;
 using Mason.Core.Globbing;
 using Mason.Core.IR;
 using Mason.Core.Markup;
+using Mason.Core.Projects;
 using Mason.Core.Projects.v1;
 using Mason.Core.Thunderstore;
 using YamlDotNet.Core;
@@ -34,149 +35,214 @@ namespace Mason.Core.Parsing.Projects.v1
 				.Build();
 		}
 
-		public Mod? Parse(Manifest manifest, string manifestFile, IParser project, string projectFile, string directory,
-			CompilerOutput output)
+		public ParserOutput Parse(UnparsedProject project)
 		{
-			Metadata meta;
-			{
-				string? author = manifest.Author?.Value;
-				if (author == null)
-				{
-					string full = Path.GetFullPath(directory); // We might be given a relative path (e.g. ".", "../") which can't be split
-					string[] split = Path.GetFileName(full).Split('-');
-					if (split.Length != 2)
-					{
-						output.Failure(MarkupMessage.Path(manifestFile,
-							"The author property must be present, or the directory must be named [author]-[name]."));
-						return null;
-					}
-
-					Marked<string> name = manifest.Name;
-					if (split[1] != name.Value)
-					{
-						output.Failure(MarkupMessage.Path(manifestFile,
-							$"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
-						return null;
-					}
-
-					author = split[0];
-					if (!Compiler.ComponentRegex.IsMatch(author))
-					{
-						output.Failure(MarkupMessage.Path(directory, "Author (inferred by directory) may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
-						return null;
-					}
-
-					output.Warnings.Add(MarkupMessage.Path(manifestFile,
-						"The author of the mod was infered by the directory name. Consider adding an 'author' property."));
-				}
-
-				{
-					string name = manifest.Name.Value;
-					Version version = manifest.VersionNumber;
-					string guid = author + "-" + name;
-					meta = new Metadata(new BepInPlugin(guid, name, version.ToString()), new PackageReference(author, name, version));
-				}
-			}
-
-			Template template;
-			try
-			{
-				template = _deserializer.Deserialize<Template>(project);
-			}
-			catch (YamlException e)
-			{
-				output.Failure(MarkupMessage.File(projectFile, e.GetRange(), e.Message));
-				return null;
-			}
-
-			Dependencies? dependencies = template.Dependencies;
-			if (dependencies != null)
-				meta.Dependencies = ToIR(dependencies);
-
-			return new Mod(meta)
-			{
-				Assets = ToIR(template.Assets, Path.Combine(directory, "resources"), output)
-			};
+			return new Scoped(this, project).Parse();
 		}
 
-		private IList<Marked<BepInDependency>> ToIR(Dependencies dependencies)
+		private class Scoped
 		{
-			List<Marked<BepInDependency>> total = new();
+			private readonly IDeserializer _deserializer;
+			private readonly GlobberFactory _globbers;
+			private readonly UnparsedProject _project;
+			private readonly HashSet<string> _referencedPaths;
+			private readonly List<MarkupMessage> _warnings;
 
+			public Scoped(V1ProjectParser global, UnparsedProject project)
 			{
-				Dictionary<string, Marked<Version>>? hard = dependencies.Hard;
-				if (hard != null)
-					foreach ((string guid, Marked<Version> version) in hard)
-						total.Add(new Marked<BepInDependency>(new BepInDependency(guid, version.Value.ToString()), version.Range));
+				(_deserializer, _globbers) = (global._deserializer, global._globbers);
+				_project = project;
+				_warnings = new List<MarkupMessage>();
+				_referencedPaths = new HashSet<string>();
 			}
 
+			public ParserOutput Parse()
 			{
-				Marked<string>[]? soft = dependencies.Soft;
-				if (soft != null)
-					foreach (Marked<string> guid in soft)
-						total.Add(new Marked<BepInDependency>(
-							new BepInDependency(guid.Value, BepInDependency.DependencyFlags.SoftDependency), guid.Range));
-			}
+				Metadata meta = ManifestToIR();
 
-			return total;
-		}
-
-		private IEnumerable<Asset> ToIR(Core.Projects.v1.Asset asset, string root, CompilerOutput output)
-		{
-			return _globbers
-				.Glob(root, asset.Path)
-				.Select(x =>
+				Project yaml;
+				try
 				{
-					string rel = Tools.RelativePath(root, x) ?? throw new Exception("Could not find relative path to globbed result.");
-					output.ReferencedPaths.Add(rel);
+					yaml = _deserializer.Deserialize<Project>(_project.Parser);
+				}
+				catch (YamlException e)
+				{
+					throw new CompilerException(MarkupMessage.File(_project.Path, e.GetRange(), e.Message), meta.Package);
+				}
+
+				if (yaml.Dependencies is { } dependencies)
+					meta.Dependencies = DependenciesToIR(dependencies);
+
+				Mod mod = new(meta)
+				{
+					Assets = AssetsToIR(yaml.Assets)
+				};
+
+				return new ParserOutput(mod, _warnings, _referencedPaths);
+			}
+
+			private string GetAuthor()
+			{
+				// Full path because we might be given a relative path (e.g. ".", "../") which can't be split
+				string full = Path.GetFullPath(_project.Directory);
+				string[] split = Path.GetFileName(full).Split('-');
+				if (split.Length != 2)
+					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
+						"The author property must be present, or the directory must be named [author]-[name]."));
+
+				Marked<string> name = _project.Manifest.Name;
+				if (split[1] != name.Value)
+					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
+						$"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
+
+				string author = split[0];
+				if (!Compiler.ComponentRegex.IsMatch(author))
+					throw new CompilerException(MarkupMessage.Path(_project.Directory,
+						"Author (inferred by directory) may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
+
+				_warnings.Add(MarkupMessage.Path(_project.ManifestPath,
+					"The author of the mod was infered by the directory name. Consider adding an 'author' property."));
+
+				return author;
+			}
+
+			private Metadata ManifestToIR()
+			{
+				Manifest manifest = _project.Manifest;
+
+				string author = manifest.Author?.Value ?? GetAuthor();
+				string name = manifest.Name.Value;
+				Version version = manifest.VersionNumber;
+				string guid = author + "-" + name;
+
+				return new Metadata(new BepInPlugin(guid, name, version.ToString()), new PackageReference(author, name, version));
+			}
+
+			private IList<BepInDependency> DependenciesToIR(Dependencies dependencies)
+			{
+				List<BepInDependency> total = new();
+				HashSet<string> used = new();
+
+				foreach ((string guid, Marked<Version> version) in dependencies.Hard.OrEmptyIfNull())
+				{
+					if (guid == Compiler.StratumGUID)
+					{
+						Version? depVersion = version.Value;
+						switch (depVersion.GoodCompareTo(Compiler.MinimumStratumVersion))
+						{
+							case 1:
+								_warnings.Add(MarkupMessage.File(_project.Path, version.Range,
+									$"Stratum dependency with a minimum version ({depVersion}) greater than required ({Compiler.MinimumStratumVersion})"));
+								break;
+							case 0:
+								_warnings.Add(MarkupMessage.File(_project.Path, version.Range, "Redundant Stratum dependency"));
+								break;
+							case -1:
+								throw new CompilerException(MarkupMessage.File(_project.Path, version.Range,
+									$"Stratum dependency with a minimum version ({depVersion}) less than required ({Compiler.MinimumStratumVersion})"));
+							default:
+								throw new ArgumentOutOfRangeException();
+						}
+					}
+
+					used.Add(guid);
+					total.Add(new BepInDependency(guid, version.Value.ToString()));
+				}
+
+				used.Add(Compiler.StratumGUID);
+				total.Add(new BepInDependency(Compiler.StratumGUID, Compiler.MinimumStratumVersion.ToString()));
+
+				foreach (Marked<string> guid in dependencies.Soft.OrEmptyIfNull())
+				{
+					string value = guid.Value;
+					if (used.Contains(value))
+						throw new CompilerException(MarkupMessage.File(_project.Path, guid.Range,
+							"Soft dependency is already a hard dependency"));
+
+					total.Add(new BepInDependency(value, BepInDependency.DependencyFlags.SoftDependency));
+				}
+
+				return total;
+			}
+
+			private IEnumerable<Asset> AssetToIR(Core.Projects.v1.Asset asset, string resources)
+			{
+				Marked<string> path = asset.Path;
+				using IEnumerator<string> enumerator = _globbers.Glob(resources, path.Value).GetEnumerator();
+
+				if (!enumerator.MoveNext())
+				{
+					_warnings.Add(MarkupMessage.File(_project.Path, path.Range, "Path matched no handles"));
+					yield break;
+				}
+
+				Asset ToAsset(string globbed)
+				{
+					string rel = Tools.RelativePath(resources, globbed) ??
+					             throw new Exception("Could not find relative path to globbed result.");
+					_referencedPaths.Add(rel);
 
 					return new Asset(rel, asset.Plugin, asset.Loader);
-				});
-		}
+				}
 
-		private IList<Asset> ToIR(IEnumerable<Core.Projects.v1.Asset> assets, string root, CompilerOutput output)
-		{
-			return assets
-				.SelectMany(x => ToIR(x, root, output))
-				.ToList();
-		}
+				yield return ToAsset(enumerator.Current!);
 
-		private AssetPipeline ToIR(Core.Projects.v1.AssetPipeline pipeline, string root, CompilerOutput output)
-		{
-			AssetPipeline ret = new()
-			{
-				Sequential = pipeline.Sequential,
-				Name = pipeline.Name
-			};
-
-			Core.Projects.v1.Asset[]? assets = pipeline.Assets;
-			if (assets != null)
-				ret.Assets = ToIR(assets, root, output);
-
-			Core.Projects.v1.AssetPipeline[]? nested = pipeline.Nested;
-			if (nested != null)
-				ret.Nested = Array.ConvertAll(nested, x => ToIR(x, root, output));
-
-			return ret;
-		}
-
-		private Assets ToIR(Core.Projects.v1.Assets source, string root, CompilerOutput output)
-		{
-			Assets assets = new();
-
-			{
-				Core.Projects.v1.Asset[]? setup = source.Setup;
-				if (setup != null)
-					assets.Setup = ToIR(setup, root, output);
+				foreach (string globbed in enumerator)
+					yield return ToAsset(globbed);
 			}
 
+			private IList<Asset> AssetsToIR(IEnumerable<Core.Projects.v1.Asset> assets, string resources)
 			{
-				Core.Projects.v1.AssetPipeline? runtime = source.Runtime;
-				if (runtime != null)
-					assets.Runtime = ToIR(runtime, root, output);
+				return assets
+					.SelectMany(x => AssetToIR(x, resources))
+					.ToList();
 			}
 
-			return assets;
+			private AssetPipeline AssetPipelineToIR(Core.Projects.v1.AssetPipeline pipeline, string resources)
+			{
+				AssetPipeline ret = new()
+				{
+					Sequential = pipeline.Sequential,
+					Name = pipeline.Name
+				};
+
+				Core.Projects.v1.Asset[]? assets = pipeline.Assets;
+				if (assets != null)
+					ret.Assets = AssetsToIR(assets, resources);
+
+				Core.Projects.v1.AssetPipeline[]? nested = pipeline.Nested;
+				if (nested != null)
+					ret.Nested = Array.ConvertAll(nested, x => AssetPipelineToIR(x, resources));
+
+				return ret;
+			}
+
+			private Assets? AssetsToIR(Core.Projects.v1.Assets? source)
+			{
+				if (source == null)
+					return null;
+
+				string resources = Path.Combine(_project.Directory, Compiler.ResourcesDirectory);
+
+				if (!Directory.Exists(resources))
+					throw new CompilerException(MarkupMessage.Path(resources, "No resources found"));
+
+				Assets assets = new();
+
+				{
+					Core.Projects.v1.Asset[]? setup = source.Setup;
+					if (setup != null)
+						assets.Setup = AssetsToIR(setup, resources);
+				}
+
+				{
+					Core.Projects.v1.AssetPipeline? runtime = source.Runtime;
+					if (runtime != null)
+						assets.Runtime = AssetPipelineToIR(runtime, resources);
+				}
+
+				return assets;
+			}
 		}
 	}
 }

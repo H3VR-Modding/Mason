@@ -1,41 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using Mason.Core.Markup;
+using Mason.Core.Parsing.Projects;
 using Mason.Core.Thunderstore;
 
 namespace Mason.Core
 {
-	internal class CompilerOutput : ICompilerOutput
+	public class CompilerOutput : IDisposable
 	{
-		private MarkupMessage? _error;
-		private PackageReference? _package;
-		private bool? _successful;
-
-		public List<MarkupMessage> Warnings { get; } = new();
-		public HashSet<string> ReferencedPaths { get; } = new();
-		IList<MarkupMessage> ICompilerOutput.Warnings => Warnings;
-		IEnumerable<string> ICompilerOutput.ReferencedPaths => ReferencedPaths;
-
-		public bool MatchSuccess([NotNullWhen(false)] out MarkupMessage? error, [NotNullWhen(true)] out PackageReference? package)
+		internal CompilerOutput(MemoryStream bootstrap, Manifest manifest, ParserOutput parserOutput)
 		{
-			error = _error;
-			package = _package;
-			return _successful ??
-			       throw new InvalidOperationException(
-				       "Success indicator was not set. This is indicative that something has gone horribly wrong.");
+			Bootstrap = bootstrap;
+			Manifest = manifest;
+			Warnings = parserOutput.Warnings;
+			ReferencedPaths = parserOutput.ReferencedPaths;
+			Package = parserOutput.Mod.Metadata.Package;
 		}
 
-		public void Success(PackageReference package)
-		{
-			_package = package;
-			_successful = true;
-		}
+		public MemoryStream Bootstrap { get; }
+		public IList<MarkupMessage> Warnings { get; }
+		public IEnumerable<string> ReferencedPaths { get; }
+		public Manifest Manifest { get; }
+		public PackageReference Package { get; }
 
-		public void Failure(MarkupMessage error)
+		public void Dispose()
 		{
-			_error = error;
-			_successful = false;
+			Bootstrap.Dispose();
 		}
 	}
 }

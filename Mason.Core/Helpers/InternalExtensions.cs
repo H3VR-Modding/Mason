@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using BepInEx;
 using Mason.Core.Markup;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 using MonoMod.Utils;
 using Newtonsoft.Json;
 using YamlDotNet.Core;
@@ -102,9 +102,28 @@ namespace Mason.Core
 			return 0;
 		}
 
-		public static bool HasFlag(this BepInDependency.DependencyFlags @this, BepInDependency.DependencyFlags value)
+		public static MethodReference MakeHostInstanceGeneric(this MethodReference @this, params TypeReference[] args)
 		{
-			return (@this & value) == value;
+			MethodReference reference = new(@this.Name, @this.ReturnType, @this.DeclaringType.MakeGenericInstanceType(args))
+			{
+				HasThis = @this.HasThis,
+				ExplicitThis = @this.ExplicitThis,
+				CallingConvention = @this.CallingConvention
+			};
+
+			foreach (var parameter in @this.Parameters)
+				reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
+
+			foreach (var parameter in @this.GenericParameters)
+				reference.GenericParameters.Add(new GenericParameter(parameter.Name, reference));
+
+			return reference;
+		}
+
+		// Allows enumerators in foreach loops
+		public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> @this)
+		{
+			return @this;
 		}
 	}
 }

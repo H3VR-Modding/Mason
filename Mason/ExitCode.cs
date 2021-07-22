@@ -2,7 +2,7 @@
 {
 	internal enum ExitCode
 	{
-		None,
+		Ok,
 		Internal,
 		Compiler,
 		ManagedDirectoryNotFound,

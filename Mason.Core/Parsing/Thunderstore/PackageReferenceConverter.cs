@@ -8,7 +8,7 @@ namespace Mason.Core.Parsing.Thunderstore
 	{
 		public override void WriteJson(JsonWriter writer, PackageReference value, JsonSerializer serializer)
 		{
-			throw new NotSupportedException();
+			writer.WriteValue(value.ToString());
 		}
 
 		public override PackageReference ReadJson(JsonReader reader, Type objectType, PackageReference existingValue, bool hasExistingValue,

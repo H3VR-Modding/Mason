@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Mason.Core.Thunderstore
 {
 	[JsonObject(ItemRequired = Required.Always)]
-	internal class Manifest
+	public class Manifest
 	{
 		[JsonConstructor]
-		public Manifest(Marked<string>? author, Marked<string> name, Version versionNumber, PackageReference[] dependencies,
+		public Manifest(Marked<string>? author, Marked<string> name, Version versionNumber, List<PackageReference> dependencies,
 			string description, string websiteUrl)
 		{
 			Author = author;
@@ -19,12 +20,12 @@ namespace Mason.Core.Thunderstore
 		}
 
 		[JsonProperty(Required = Required.Default)]
-		public Marked<string>? Author { get; }
+		public Marked<string>? Author { get; set; }
 
-		public Marked<string> Name { get; }
-		public Version VersionNumber { get; }
-		public PackageReference[] Dependencies { get; }
-		public string Description { get; }
-		public string WebsiteUrl { get; }
+		public Marked<string> Name { get; set; }
+		public Version VersionNumber { get; set; }
+		public List<PackageReference> Dependencies { get; }
+		public string Description { get; set; }
+		public string WebsiteUrl { get; set; }
 	}
 }

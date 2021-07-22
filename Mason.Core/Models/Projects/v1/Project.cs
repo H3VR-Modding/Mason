@@ -1,9 +1,9 @@
 ﻿#pragma warning disable 8618
 namespace Mason.Core.Projects.v1
 {
-	internal class Template
+	internal class Project
 	{
 		public Dependencies? Dependencies { get; set; }
-		public Assets Assets { get; set; }
+		public Assets? Assets { get; set; }
 	}
 }

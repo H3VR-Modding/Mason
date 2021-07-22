@@ -55,8 +55,7 @@
     }
   ],
   "required": [
-    "version",
-    "assets"
+    "version"
   ],
   "properties": {
     "version": {

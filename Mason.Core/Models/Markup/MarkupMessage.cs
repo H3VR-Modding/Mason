@@ -30,10 +30,9 @@ namespace Mason.Core.Markup
 
 		public MarkupLocation Location { get; }
 
-		public string ToString(string severity, Func<string, string> pathToString)
+		private void ToString(StringBuilder builder, Func<string, string> pathToString)
 		{
-			StringBuilder builder = new StringBuilder(severity)
-				.Append(" at ")
+			builder
 				.Append(pathToString(Location.Path))
 				.Append('(')
 				.Append(Location.Start.Line)
@@ -56,6 +55,23 @@ namespace Mason.Core.Markup
 			builder
 				.Append("): ")
 				.Append(Message);
+		}
+
+		public string ToString(Func<string, string> pathToString)
+		{
+			StringBuilder builder = new();
+
+			ToString(builder, pathToString);
+
+			return builder.ToString();
+		}
+
+		public string ToString(string severity, Func<string, string> pathToString)
+		{
+			StringBuilder builder = new StringBuilder(severity)
+				.Append(" at ");
+
+			ToString(builder, pathToString);
 
 			return builder.ToString();
 		}

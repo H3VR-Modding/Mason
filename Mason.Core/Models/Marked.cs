@@ -2,7 +2,7 @@ using Mason.Core.Markup;
 
 namespace Mason.Core
 {
-	internal readonly struct Marked<T>
+	public readonly struct Marked<T>
 	{
 		public MarkupRange Range { get; }
 		public T Value { get; }

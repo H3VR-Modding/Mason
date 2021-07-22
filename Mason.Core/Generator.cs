@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using BepInEx;
 using Mason.Core.IR;
 using Mason.Core.RefsAndDefs;
@@ -249,6 +248,19 @@ namespace Mason.Core
 					EmitAsset(il, _refs.Stratum.RuntimeGenerics, asset);
 			}
 
+			private void AddCtor()
+			{
+				MethodDefinition method = new(".ctor", CtorAttributes, _module.TypeSystem.Void);
+
+				ILProcessor il = method.Body.GetILProcessor();
+
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.StratumPluginCtor));
+				il.Emit(OpCodes.Ret);
+
+				_type.Methods.Add(method);
+			}
+
 			private void AddSetupMethod()
 			{
 				StratumRefs.Generics generics = _refs.Stratum.SetupGenerics;
@@ -345,7 +357,7 @@ namespace Mason.Core
 					attr.Add(dest);
 				}
 
-				foreach (BepInDependency source in metadata.Dependencies.OrEmptyIfNull().Select(x => x.Value))
+				foreach (BepInDependency source in metadata.Dependencies.OrEmptyIfNull())
 				{
 					MethodReference ctor;
 					CustomAttributeArgument[] args;
@@ -389,10 +401,15 @@ namespace Mason.Core
 			public AssemblyDefinition Generate()
 			{
 				AddMetadata();
+				AddCtor();
 				AddSetupMethod();
 				AddRuntimeMethod();
 
-				_module.AssemblyReferences.RemoveAt(0);
+				// If you see another mscorlib reference:
+				// All our libs depend on mscorlib with a "" Culture, but Mono.Cecil uses a null Culture internally. It's
+				// AssemblyNameReference equality method thinks they are not equal, so it adds another mscorlib reference. We could submit
+				// an issue, but net35 support has been dropped, so any fix would not work for us.
+
 				return _module.Assembly;
 			}
 

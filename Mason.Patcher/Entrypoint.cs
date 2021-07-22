@@ -7,7 +7,6 @@ using BepInEx;
 using BepInEx.Logging;
 using Mason.Core;
 using Mason.Core.Markup;
-using Mason.Core.Thunderstore;
 using Mono.Cecil;
 
 namespace Mason.Patcher
@@ -32,56 +31,66 @@ namespace Mason.Patcher
 
 			Logger.LogDebug("Constructed compiler");
 
-			using MemoryStream buffer = new(2 * 4096);
-
 			foreach (string directory in Directory.GetDirectories(Paths.PluginPath))
 			{
-				string GetDirectoryName() => Path.GetFileName(directory);
+				string GetDirectoryName()
+				{
+					return Path.GetFileName(directory);
+				}
 
-				buffer.SetLength(0);
+				void Error(string message, string? name = null)
+				{
+					Logger.LogError($"Failed to compile {name ??= GetDirectoryName()}:\n{message}");
+				}
 
-				ICompilerOutput? output;
+				void ErrorMarkup(MarkupMessage markup, string? name = null)
+				{
+					Error(markup.ToString("error", Path.GetFullPath), name);
+				}
+
+				CompilerOutput output;
 				try
 				{
-					output = compiler.Compile(directory, buffer);
+					output = compiler.Compile(directory);
+				}
+				catch (FileNotFoundException e)
+				{
+					if (e.FileName is not { } fileName)
+						throw;
+
+					Logger.LogDebug($"Skipping {GetDirectoryName()} because of missing file: '{fileName}'");
+					continue;
+				}
+				catch (CompilerException e)
+				{
+					ErrorMarkup(e.Markup, e.Package?.Name);
+					continue;
 				}
 				catch (Exception e)
 				{
-					Logger.LogError($"Failed to compile {GetDirectoryName()}:\n{e}");
+					Error(e.ToString());
 					continue;
 				}
 
-				if (output == null)
-					continue;
+				IList<MarkupMessage> warnings = output.Warnings;
 
-				if (!output.MatchSuccess(out MarkupMessage? error, out PackageReference? package))
+				if (warnings.Count > 0)
 				{
-					string name = package?.Name ?? GetDirectoryName();
+					StringBuilder? builder = new StringBuilder().AppendLine();
 
-					Logger.LogError($"Failed to compile {name}:\n{error.ToString("error", Path.GetFullPath)}");
+					foreach (MarkupMessage warning in warnings)
+						builder.AppendLine(warning.ToString("warning", Path.GetFullPath));
+
+					Logger.LogWarning(builder.ToString());
 				}
-				else
-				{
-					IList<MarkupMessage> warnings = output.Warnings;
 
-					if (warnings.Count > 0)
-					{
-						StringBuilder? builder = new StringBuilder().AppendLine();
+				Logger.LogInfo($"Compiled {output.Package} with {warnings.Count} warnings");
 
-						foreach (MarkupMessage warning in warnings)
-							builder.AppendLine(warning.ToString("warning", Path.GetFullPath));
+				using FileStream? file = File.Create(Path.Combine(directory, "bootstrap.dll"));
+				Logger.LogDebug("Acquired output file");
 
-						Logger.LogWarning(builder.ToString());
-					}
-
-					Logger.LogInfo($"Compiled {package.Value} with {warnings.Count} warnings");
-
-					using FileStream? file = File.Create(Path.Combine(directory, "bootstrap.dll"));
-					Logger.LogDebug("Acquired output file");
-
-					buffer.CopyTo(file);
-					Logger.LogDebug("Wrote content to disk");
-				}
+				output.Bootstrap.CopyTo(file);
+				Logger.LogDebug("Wrote content to disk");
 			}
 		}
 	}
