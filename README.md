@@ -31,3 +31,6 @@ To use the patcher plugin, first navigate to your r2modman profile directory (if
 - Ignore the building step; the patcher plugin does the building for you.
 
 For more experienced users, it is recommended that you clone the repository to a directory of your choosing, then use a symlink within the `BepInEx/plugins` directory. This keeps your git projects out of your r2modman profiles, but has the same functionality.
+
+## Versioning
+The version of this repository is based on the two consumable projects: standalone and patcher plugin. It does not include the public API of the core project, which may change at any time.
