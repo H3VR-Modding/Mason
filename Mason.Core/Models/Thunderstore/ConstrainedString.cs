@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mason.Core.Thunderstore
 {
@@ -36,9 +37,10 @@ namespace Mason.Core.Thunderstore
 			return Value;
 		}
 
-		public static implicit operator string(ConstrainedString<T> @this)
+		[return: NotNullIfNotNull("@this")]
+		public static implicit operator string?(ConstrainedString<T>? @this)
 		{
-			return @this.Value;
+			return @this?.Value;
 		}
 
 		public static bool operator ==(ConstrainedString<T> lhs, ConstrainedString<T> rhs)
