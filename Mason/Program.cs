@@ -116,6 +116,11 @@ namespace Mason.Standalone
 			return Path.GetRelativePath(Environment.CurrentDirectory, path);
 		}
 
+		private static void Warn(MarkupMessage markup)
+		{
+			Console.WriteLine(markup.ToString("warning", RelativePath));
+		}
+
 		private readonly Config _config;
 		private readonly string _dir;
 
@@ -139,6 +144,7 @@ namespace Mason.Standalone
 
 				Console.WriteLine("Creating package");
 				archive = await Zip(output, opt.Compression);
+				Console.WriteLine("Created package");
 			}
 
 			await using (archive)
@@ -155,6 +161,7 @@ namespace Mason.Standalone
 			{
 				async Task CreateEntry(string path, Stream content)
 				{
+					// ReSharper disable once AccessToDisposedClosure
 					ZipArchiveEntry entry = archive.CreateEntry(path, compression);
 					entry.LastWriteTime = now;
 					entry.ExternalAttributes = ZipUtils.ExternalAttributes;
@@ -167,14 +174,14 @@ namespace Mason.Standalone
 				Console.WriteLine("Added bootstrap DLL");
 
 				{
-					await using MemoryStream manifest = new();
+					await using MemoryStream formattedManifest = new();
 					{
-						await using StreamWriter text = new(manifest, leaveOpen: true);
+						await using StreamWriter text = new(formattedManifest, leaveOpen: true);
 						using JsonTextWriter json = new(text);
 
 						Compiler.ManifestSerializer.Serialize(json, output.Manifest);
 					}
-					manifest.Position = 0;
+					formattedManifest.Position = 0;
 
 					await CreateEntry("manifest.json", backing);
 				}
@@ -189,7 +196,7 @@ namespace Mason.Standalone
 						throw new ExitException(ExitCode.MissingThunderstoreFiles,
 							MarkupMessage.Path(file, "Missing file is required for a Thunderstore package"));
 
-					archive.AddFile(file, file, compression);
+					await archive.AddFile(file, file, compression);
 				}
 				Console.WriteLine("Added Thunderstore-required files");
 
@@ -198,12 +205,10 @@ namespace Mason.Standalone
 			}
 			backing.Position = 0;
 
-			Console.WriteLine("Constructed archive");
-
 			return backing;
 		}
 
-		private void AddResources(ZipArchive archive, string root, IEnumerable<string> paths, CompressionLevel compression)
+		private async Task AddResources(ZipArchive archive, string root, IEnumerable<string> paths, CompressionLevel compression)
 		{
 			StringBuilder builder = new();
 			HashSet<string> entries = new();
@@ -219,7 +224,7 @@ namespace Mason.Standalone
 					if (entries.Contains(path))
 						continue;
 
-					archive.AddFile(realPath, zipDir + path, compression);
+					await archive.AddFile(realPath, zipDir + path, compression);
 					entries.Add(path);
 				}
 				else if (Directory.Exists(realPath))
@@ -229,7 +234,7 @@ namespace Mason.Standalone
 
 					builder.Append(zipDir).Append(path);
 					archive.CreateEntry(builder.ToString());
-					archive.AddDirectory(realPath, compression, builder, entries);
+					await archive.AddDirectory(realPath, compression, builder, entries);
 					builder.Clear();
 
 					entries.Add(path);
@@ -267,7 +272,7 @@ namespace Mason.Standalone
 			IList<MarkupMessage> warnings = output.Warnings;
 
 			foreach (MarkupMessage warning in warnings)
-				Console.WriteLine(warning.ToString("warning", RelativePath));
+				Warn(warning);
 
 			Console.WriteLine($"Compiled {output.Package} with {warnings.Count} warnings");
 
