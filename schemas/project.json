@@ -15,6 +15,12 @@
           "ExampleSoftDependency"
         ]
       },
+      "incompatibilities": [
+        "ExampleIncompatibility"
+      ],
+      "processes": [
+        "ExampleGame.exe"
+      ],
       "assets": {
         "setup": [
           {
@@ -92,10 +98,9 @@
           ],
           "patternProperties": {
             "^[a-zA-Z0-9\\._\\-]+$": {
-              "$id": "#/properties/assets/hard/properties",
               "type": "string",
               "title": "Hard dependency",
-              "description": "A plugin that must be present and its minimum version",
+              "description": "The GUID of a plugin and and the minimum version that must be present",
               "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+(\\.[0-9]+)?)?$",
               "examples": [
                 "1.2.3"
@@ -114,10 +119,9 @@
             ]
           ],
           "items": {
-            "$id": "#/properties/assets/soft/items",
             "type": "string",
             "title": "Soft dependency",
-            "description": "A plugin that must load before this project if present",
+            "description": "The GUID of a plugin that must load before this project if present",
             "pattern": "^[a-zA-Z0-9\\._\\-]+$",
             "examples": [
               "ExampleSoftDependency"
@@ -128,6 +132,45 @@
         "additionalProperties": false
       },
       "additionalProperties": false
+    },
+    "incompatibilities": {
+      "type": "array",
+      "title": "Incompatibilities",
+      "description": "Plugins that will cause this project to both not load, and display a warning in the console",
+      "examples": [
+        [
+          "ExampleIncompatibility"
+        ]
+      ],
+      "items": {
+        "type": "string",
+        "title": "Incompatibility",
+        "description": "A plugin that will cause this project to both not load, and display a warning in the console",
+        "pattern": "^[a-zA-Z0-9\\._\\-]+$",
+        "examples": [
+          "ExampleIncompatibility"
+        ]
+      },
+      "additionalItems": false
+    },
+    "processes": {
+      "type": "array",
+      "title": "Processes",
+      "description": "Processes that this plugin can run under. None for any",
+      "examples": [
+        [
+          "ExampleGame.exe"
+        ]
+      ],
+      "items": {
+        "type": "string",
+        "title": "Process",
+        "description": "The file name of a process that this plugin can run under",
+        "examples": [
+          "ExampleGame.exe"
+        ]
+      },
+      "additionalItems": false
     },
     "assets": {
       "type": "object",
