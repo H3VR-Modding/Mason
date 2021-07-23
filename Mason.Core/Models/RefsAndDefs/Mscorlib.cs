@@ -9,17 +9,17 @@ namespace Mason.Core.RefsAndDefs
 	{
 		public MscorlibRefs(ModuleDefinition mscorlib)
 		{
-			ObjectCtor = mscorlib.GetType("System.Object").FindMethod("System.Void .ctor()");
+			ObjectCtor = mscorlib.GetTypeSafe("System.Object").FindMethodSafe("System.Void .ctor()");
 
-			CompilerGeneratedAttributeCtor = mscorlib.GetType("System.Runtime.CompilerServices.CompilerGeneratedAttribute")
-				.FindMethod("System.Void .ctor()");
+			CompilerGeneratedAttributeCtor = mscorlib.GetTypeSafe("System.Runtime.CompilerServices.CompilerGeneratedAttribute")
+				.FindMethodSafe("System.Void .ctor()");
 
-			IEnumerableGetEnumeratorMethod = mscorlib.GetType("System.Collections.IEnumerable")
-				.FindMethod("System.Collections.IEnumerator GetEnumerator()");
+			IEnumerableGetEnumeratorMethod = mscorlib.GetTypeSafe("System.Collections.IEnumerable")
+				.FindMethodSafe("System.Collections.IEnumerator GetEnumerator()");
 
-			IEnumeratorType = mscorlib.GetType("System.Collections.IEnumerator");
+			IEnumeratorType = mscorlib.GetTypeSafe("System.Collections.IEnumerator");
 
-			ActionType = mscorlib.GetType("System.Action`1");
+			ActionType = mscorlib.GetTypeSafe("System.Action`1");
 		}
 
 		public MethodReference ObjectCtor { get; }

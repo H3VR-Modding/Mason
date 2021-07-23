@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mason.Core.Markup;
@@ -119,6 +120,27 @@ namespace Mason.Core
 		public static IEnumerator<T> GetEnumerator<T>(this IEnumerator<T> @this)
 		{
 			return @this;
+		}
+
+		public static TypeDefinition GetTypeSafe(this ModuleDefinition @this, string fullName)
+		{
+			return @this.GetType(fullName) ?? throw new InvalidOperationException($"Type '{fullName}' not found ({@this.Assembly})");
+		}
+
+		public static MethodDefinition FindMethodSafe(this TypeDefinition @this, string id)
+		{
+			return @this.FindMethod(id) ?? throw new InvalidOperationException($"Method '{id}' not found in '{@this}' ({@this.Module.Assembly})");
+		}
+
+		public static PropertyDefinition FindPropertySafe(this TypeDefinition @this, string name)
+		{
+			return @this.FindProperty(name) ?? throw new InvalidOperationException($"Property '{name}' not found in '{@this}' ({@this.Module.Assembly})");
+		}
+
+		public static MethodDefinition GetGetMethodSafe(this PropertyDefinition @this)
+		{
+			return @this.GetMethod ??
+			       throw new InvalidOperationException($"Property '{@this}' does not have a getter ({@this.Module.Assembly}");
 		}
 	}
 }

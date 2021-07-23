@@ -8,19 +8,20 @@ namespace Mason.Core.RefsAndDefs
 	{
 		public BepInExRefs(ModuleDefinition bepInEx)
 		{
-			BepInPluginCtor = bepInEx.GetType("BepInEx.BepInPlugin")
-				.FindMethod("System.Void .ctor(System.String,System.String,System.String)");
+			BepInPluginCtor = bepInEx.GetTypeSafe("BepInEx.BepInPlugin")
+				.FindMethodSafe("System.Void .ctor(System.String,System.String,System.String)");
 
-			BepInProcessCtor = bepInEx.GetType("BepInEx.BepInProcess").FindMethod("System.Void .ctor(System.String)");
+			BepInProcessCtor = bepInEx.GetTypeSafe("BepInEx.BepInProcess").FindMethodSafe("System.Void .ctor(System.String)");
 
-			TypeDefinition bepindep = bepInEx.GetType("BepInEx.BepInDependency");
-			BepInDependencyCtorWithVersion = bepindep.FindMethod("System.Void .ctor(System.String,System.String)");
-			BepInDependencyCtorWithFlags = bepindep.FindMethod("System.Void .ctor(System.String,BepInEx.BepInDependency/DependencyFlags)");
-			BepInDependencyDependencyFlagsType = bepindep.NestedTypes.Single(x => x.Name == "DependencyFlags");
+			TypeDefinition bepindep = bepInEx.GetTypeSafe("BepInEx.BepInDependency");
+			BepInDependencyCtorWithVersion = bepindep.FindMethodSafe("System.Void .ctor(System.String,System.String)");
+			BepInDependencyCtorWithFlags = bepindep.FindMethodSafe("System.Void .ctor(System.String,BepInEx.BepInDependency/DependencyFlags)");
 
-			BepInIncompatibilityCtor = bepInEx.GetType("BepInEx.BepInIncompatibility").FindMethod("System.Void .ctor(System.String)");
+			BepInDependencyDependencyFlagsType = bepInEx.GetTypeSafe("BepInEx.BepInDependency/DependencyFlags");
 
-			BaseUnityPluginLoggerGetter = bepInEx.GetType("BepInEx.BaseUnityPlugin").FindProperty("Logger").GetMethod;
+			BepInIncompatibilityCtor = bepInEx.GetTypeSafe("BepInEx.BepInIncompatibility").FindMethodSafe("System.Void .ctor(System.String)");
+
+			BaseUnityPluginLoggerGetter = bepInEx.GetTypeSafe("BepInEx.BaseUnityPlugin").FindProperty("Logger").GetMethod;
 		}
 
 		public MethodReference BepInPluginCtor { get; }
@@ -29,6 +30,7 @@ namespace Mason.Core.RefsAndDefs
 
 		public MethodReference BepInDependencyCtorWithVersion { get; }
 		public MethodReference BepInDependencyCtorWithFlags { get; }
+
 		public TypeReference BepInDependencyDependencyFlagsType { get; }
 
 		public MethodReference BepInIncompatibilityCtor { get; }

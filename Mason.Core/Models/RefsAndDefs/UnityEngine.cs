@@ -7,8 +7,8 @@ namespace Mason.Core.RefsAndDefs
 	{
 		public UnityEngineRefs(ModuleDefinition unityEngine)
 		{
-			StartCoroutineMethod = unityEngine.GetType("UnityEngine.MonoBehaviour")
-				.FindMethod("UnityEngine.Coroutine StartCoroutine(System.Collections.IEnumerator)");
+			StartCoroutineMethod = unityEngine.GetTypeSafe("UnityEngine.MonoBehaviour")
+				.FindMethodSafe("UnityEngine.Coroutine StartCoroutine(System.Collections.IEnumerator)");
 		}
 
 		public MethodReference StartCoroutineMethod { get; }

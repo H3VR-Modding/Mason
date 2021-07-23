@@ -31,9 +31,16 @@ namespace Mason.Core.RefsAndDefs
 			_bepInEx = Read(paths.BepInEx);
 			_stratum = Read(paths.Stratum);
 
-			MscorlibRefs mscorlib = new(_mscorlib);
-			Refs = new RootRef(mscorlib, new SystemCoreRefs(_systemCore), new UnityEngineRefs(_unityEngine), new BepInExRefs(_bepInEx),
-				new StratumRefs(mscorlib, _stratum));
+			try
+			{
+				MscorlibRefs mscorlib = new(_mscorlib);
+				Refs = new RootRef(mscorlib, new SystemCoreRefs(_systemCore), new UnityEngineRefs(_unityEngine), new BepInExRefs(_bepInEx),
+					new StratumRefs(mscorlib, _stratum));
+			}
+			catch (Exception e)
+			{
+				throw new Exception("Failed to find all references required", e);
+			}
 		}
 
 		public RootRef Refs { get; }
