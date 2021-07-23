@@ -26,18 +26,14 @@ namespace Mason.Core.Parsing.Thunderstore
 			if (obj is not string scalar)
 				return null;
 
-			string[] split = scalar.Split('-');
-			if (split.Length != 3)
-				throw NewException("A dependency string must be the author, name, and version, delimited by a hyphen (-)");
-
-			if (PackageComponentString.TryParse(split[0]) is not { } author)
-				throw NewException("Authors may only have the characters a-z A-Z 0-9 _ and may not start or end with _");
-			if (PackageComponentString.TryParse(split[1]) is not { } name)
-				throw NewException("Names may only have the characters a-z A-Z 0-9 _ and may not start or end with _");
-			if (SimpleSemVersion.TryParse(split[2]) is not { } version)
-				throw NewException("Versions must be 3 positive integers, delimited by .");
-
-			return new PackageReference(author, name, version);
+			try
+			{
+				return PackageReference.Parse(scalar);
+			}
+			catch (FormatException e)
+			{
+				throw NewException(e.Message);
+			}
 		}
 	}
 }

@@ -10,6 +10,7 @@
 		MissingProjectFiles,
 		MissingThunderstoreFiles,
 		ProjectDirectoryDoesNotExist,
-		MissingConfig
+		MissingConfig,
+		InvalidConfig
 	}
 }

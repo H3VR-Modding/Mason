@@ -59,11 +59,6 @@ namespace Mason.Core
 			return new(@this.Start.GetIndex(), @this.End.GetIndex());
 		}
 
-		public static MarkupRange GetRange(this YamlException @this)
-		{
-			return new(@this.Start.GetIndex(), @this.End.GetIndex());
-		}
-
 		public static int GoodCompareTo(this Version @this, Version other)
 		{
 			int major = @this.Major.CompareTo(other.Major);

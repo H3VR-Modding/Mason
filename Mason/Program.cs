@@ -8,8 +8,10 @@ using CommandLine;
 using Mason.Core;
 using Mason.Core.Markup;
 using Newtonsoft.Json;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using Parser = CommandLine.Parser;
 
 namespace Mason.Standalone
 {
@@ -111,9 +113,19 @@ namespace Mason.Standalone
 
 			IDeserializer deserializer = new DeserializerBuilder()
 				.WithNamingConvention(UnderscoredNamingConvention.Instance)
+				.WithTypeConverter(new PackageReferenceNoVersionTypeConverter())
 				.Build();
 
-			var config = deserializer.Deserialize<Config>(reader);
+			Config config;
+			try
+			{
+				config = deserializer.Deserialize<Config>(reader);
+			}
+			catch (YamlException e)
+			{
+				Error(MarkupMessage.File(RelativePath(file.FullName), e.GetRange(), "Failed to read config: " + e.Message));
+				throw new ExitException(ExitCode.InvalidConfig);
+			}
 			config.ResolvePaths(file.DirectoryName ?? throw new IOException("Config file was not in a directory."));
 
 			return config;
@@ -260,6 +272,9 @@ namespace Mason.Standalone
 		private CompilerOutput Compile()
 		{
 			CompilerParameters parameters = new(_config.Directories.Managed, _config.Directories.Bepinex);
+			if (_config.StratumPackage is { } stratumPackage)
+				parameters.StratumPackage = stratumPackage;
+
 			Compiler compiler = new(parameters);
 			Console.WriteLine("Constructed compiler");
 

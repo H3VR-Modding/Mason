@@ -1,5 +1,6 @@
 ﻿#pragma warning disable 8618
 using System.IO;
+using Mason.Core.Thunderstore;
 
 namespace Mason.Standalone
 {
@@ -11,6 +12,8 @@ namespace Mason.Standalone
 		}
 
 		public DirectoriesNode Directories { get; set; }
+
+		public PackageReferenceNoVersion? StratumPackage { get; set; }
 
 		public void ResolvePaths(string directory)
 		{

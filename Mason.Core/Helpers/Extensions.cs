@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using Mason.Core.Markup;
+using YamlDotNet.Core;
 
 namespace Mason.Core
 {
@@ -42,6 +44,11 @@ namespace Mason.Core
 
 			while ((read = @this.Read(buffer, 0, buffer.Length)) != 0)
 				other.Write(buffer, 0, read);
+		}
+
+		public static MarkupRange GetRange(this YamlException @this)
+		{
+			return new(@this.Start.GetIndex(), @this.End.GetIndex());
 		}
 	}
 }
