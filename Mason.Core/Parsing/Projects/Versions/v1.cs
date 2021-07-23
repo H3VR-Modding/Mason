@@ -134,7 +134,7 @@ namespace Mason.Core.Parsing.Projects.v1
 					if (guid == Compiler.StratumGUID)
 					{
 						Version? depVersion = version.Value;
-						switch (depVersion.CompareTo(Compiler.MinimumStratumVersion))
+						switch (depVersion.GoodCompareTo(Compiler.MinimumStratumVersion))
 						{
 							case 1:
 								_warnings.Add(MarkupMessage.File(_project.Path, version.Range,
