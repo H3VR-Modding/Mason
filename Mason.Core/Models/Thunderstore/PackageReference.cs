@@ -4,7 +4,7 @@ namespace Mason.Core.Thunderstore
 {
 	public class PackageReference : PackageReferenceNoVersion
 	{
-		public static PackageReference Parse(string value)
+		public new static PackageReference Parse(string value)
 		{
 			string[] split = value.Split('-');
 			if (split.Length != 3)

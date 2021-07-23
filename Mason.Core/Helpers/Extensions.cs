@@ -2,6 +2,7 @@
 using System.IO;
 using Mason.Core.Markup;
 using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 
 namespace Mason.Core
 {
@@ -49,6 +50,18 @@ namespace Mason.Core
 		public static MarkupRange GetRange(this YamlException @this)
 		{
 			return new(@this.Start.GetIndex(), @this.End.GetIndex());
+		}
+
+		public static bool IsNull(this Scalar @this)
+		{
+			if (@this.Tag == "tag:yaml.org,2002:null")
+				return true;
+
+			return @this is
+			{
+				Style: not ScalarStyle.Plain,
+				Value: "" or "~" or "null" or "Null" or "NULL"
+			};
 		}
 	}
 }

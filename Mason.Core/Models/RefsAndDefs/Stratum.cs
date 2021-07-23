@@ -1,6 +1,5 @@
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
-using MonoMod.Utils;
 
 // ReSharper disable InconsistentNaming
 

@@ -4,12 +4,6 @@ namespace Mason.Core.Thunderstore
 {
 	public class PackageReferenceNoVersion
 	{
-		public PackageReferenceNoVersion(PackageComponentString author, PackageComponentString name)
-		{
-			Author = author;
-			Name = name;
-		}
-
 		public static PackageReferenceNoVersion Parse(string value)
 		{
 			string[] split = value.Split('-');
@@ -22,6 +16,12 @@ namespace Mason.Core.Thunderstore
 				throw new FormatException("Names may only have the characters a-z A-Z 0-9 _ and may not start or end with underscore (_)");
 
 			return new PackageReferenceNoVersion(author, name);
+		}
+
+		public PackageReferenceNoVersion(PackageComponentString author, PackageComponentString name)
+		{
+			Author = author;
+			Name = name;
 		}
 
 		public PackageComponentString Author { get; }

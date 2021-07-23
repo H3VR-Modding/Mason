@@ -1,5 +1,4 @@
 ﻿using Mono.Cecil;
-using MonoMod.Utils;
 
 namespace Mason.Core.RefsAndDefs
 {

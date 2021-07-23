@@ -20,7 +20,7 @@ namespace Mason.Core.Parsing.Projects
 			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Marked<>);
 		}
 
-		public object? ReadYaml(IParser parser, Type type)
+		public object ReadYaml(IParser parser, Type type)
 		{
 			MarkParser marker = new(parser);
 			object? value = _deserializer.Value.Deserialize(marker, type.GetGenericArguments()[0]);

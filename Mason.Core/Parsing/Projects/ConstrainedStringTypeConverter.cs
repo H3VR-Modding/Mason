@@ -1,11 +1,12 @@
 using System;
+using Mason.Core.Thunderstore;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
 namespace Mason.Core.Parsing.Projects
 {
-	internal abstract class ConstrainedStringTypeConverter<T> : IYamlTypeConverter
+	internal abstract class ConstrainedStringTypeConverter<T> : IYamlTypeConverter where T : ConstrainedString<T>
 	{
 		public bool Accepts(Type type)
 		{
@@ -14,9 +15,11 @@ namespace Mason.Core.Parsing.Projects
 
 		public object? ReadYaml(IParser parser, Type type)
 		{
-			string scalar = parser.Consume<Scalar>().Value;
+			var scalar = parser.Consume<Scalar>();
+			if (scalar.IsNull())
+				return null;
 
-			return Parse(scalar);
+			return Parse(scalar.Value);
 		}
 
 		public void WriteYaml(IEmitter emitter, object? value, Type type)

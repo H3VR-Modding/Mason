@@ -1,4 +1,5 @@
 using System;
+using Mason.Core;
 using Mason.Core.Thunderstore;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -15,9 +16,9 @@ namespace Mason.Standalone
 
 		public object? ReadYaml(IParser parser, Type type)
 		{
-			string scalar = parser.Consume<Scalar>().Value;
+			var scalar = parser.Consume<Scalar>();
 
-			return PackageReferenceNoVersion.Parse(scalar);
+			return scalar.IsNull() ? null : PackageReferenceNoVersion.Parse(scalar.Value);
 		}
 
 		public void WriteYaml(IEmitter emitter, object? value, Type type)

@@ -1,5 +1,4 @@
 ﻿using Mono.Cecil;
-using MonoMod.Utils;
 
 // ReSharper disable InconsistentNaming
 

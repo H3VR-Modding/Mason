@@ -133,7 +133,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				{
 					if (guid == Compiler.StratumGUID)
 					{
-						Version? depVersion = version.Value;
+						Version depVersion = version.Value;
 						switch (depVersion.GoodCompareTo(Compiler.MinimumStratumVersion))
 						{
 							case 1:

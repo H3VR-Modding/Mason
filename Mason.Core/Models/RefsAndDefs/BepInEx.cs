@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using MonoMod.Utils;
 
 namespace Mason.Core.RefsAndDefs
