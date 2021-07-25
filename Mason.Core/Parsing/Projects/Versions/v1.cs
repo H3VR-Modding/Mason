@@ -32,6 +32,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				.WithNamingConvention(UnderscoredNamingConvention.Instance)
 				.WithTypeConverter(new MarkedTypeConverter(box))
 				.WithTypeConverter(new GuidStringTypeConverter())
+				.WithTypeConverter(new MarkupMessageIDTypeConverter())
 				.Build();
 		}
 
@@ -67,7 +68,8 @@ namespace Mason.Core.Parsing.Projects.v1
 				}
 				catch (YamlException e)
 				{
-					throw new CompilerException(MarkupMessage.File(_project.Path, e.GetRange(), e.Message), meta.Package);
+					throw new CompilerException(
+						MarkupMessage.File(_project.Path, e.GetRange(), Messages.ProjectFailedDeserialization, e.Message), meta.Package);
 				}
 
 				meta.Dependencies = DependenciesToIR(yaml.Dependencies);
@@ -79,7 +81,7 @@ namespace Mason.Core.Parsing.Projects.v1
 					Assets = AssetsToIR(yaml.Assets)
 				};
 
-				return new ParserOutput(mod, _warnings, _referencedPaths);
+				return new ParserOutput(mod, _warnings, _referencedPaths, yaml.Ignore);
 			}
 
 			private PackageComponentString GetAuthor()
@@ -88,20 +90,16 @@ namespace Mason.Core.Parsing.Projects.v1
 				string full = Path.GetFullPath(_project.Directory);
 				string[] split = Path.GetFileName(full).Split('-');
 				if (split.Length != 2)
-					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
-						"The author property must be present, or the directory must be named [author]-[name]."));
+					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath, Messages.UnknownAuthor));
 
 				Marked<PackageComponentString> name = _project.Manifest.Name;
 				if (split[1] != name.Value)
-					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath,
-						$"The author property must be present, or the directory must be named [author]-[name]. Perhaps you meant to name the directory '{split[0]}-{name}'?"));
+					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath, Messages.DiscrepantAuthor, split[0], name));
 
 				if (PackageComponentString.TryParse(split[0]) is not { } author)
-					throw new CompilerException(MarkupMessage.Path(_project.Directory,
-						"Author (inferred by directory) may only contain the characters a-z A-Z 0-9 _ and cannot start or end with _"));
+					throw new CompilerException(MarkupMessage.Path(_project.Directory, Messages.InferredAuthorInvalid));
 
-				_warnings.Add(MarkupMessage.Path(_project.ManifestPath,
-					"The author of the mod was infered by the directory name. Consider adding an 'author' property."));
+				_warnings.Add(MarkupMessage.Path(_project.ManifestPath, Messages.InferredAuthorSuccessful));
 
 				return author;
 			}
@@ -137,15 +135,15 @@ namespace Mason.Core.Parsing.Projects.v1
 						switch (depVersion.GoodCompareTo(Compiler.MinimumStratumVersion))
 						{
 							case 1:
-								_warnings.Add(MarkupMessage.File(_project.Path, version.Range,
-									$"Stratum dependency with a minimum version ({depVersion}) greater than required ({Compiler.MinimumStratumVersion})"));
+								_warnings.Add(MarkupMessage.File(_project.Path, version.Range, Messages.StratumDependencySuperior,
+									depVersion, Compiler.MinimumStratumVersion));
 								break;
 							case 0:
-								_warnings.Add(MarkupMessage.File(_project.Path, version.Range, "Redundant Stratum dependency"));
+								_warnings.Add(MarkupMessage.File(_project.Path, version.Range, Messages.StratumDependencyRedundant));
 								break;
 							case -1:
 								throw new CompilerException(MarkupMessage.File(_project.Path, version.Range,
-									$"Stratum dependency with a minimum version ({depVersion}) less than required ({Compiler.MinimumStratumVersion})"));
+									Messages.StratumDependencyInferior, depVersion, Compiler.MinimumStratumVersion));
 							default:
 								throw new ArgumentOutOfRangeException();
 						}
@@ -162,8 +160,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				{
 					GuidString value = guid.Value;
 					if (used.Contains(value))
-						throw new CompilerException(MarkupMessage.File(_project.Path, guid.Range,
-							"Soft dependency is already a hard dependency"));
+						throw new CompilerException(MarkupMessage.File(_project.Path, guid.Range, Messages.SoftDependencyIsHardDependency));
 
 					total.Add(new BepInDependency(value, BepInDependency.DependencyFlags.SoftDependency));
 				}
@@ -171,12 +168,12 @@ namespace Mason.Core.Parsing.Projects.v1
 				return total;
 			}
 
-			private IList<BepInIncompatibility>? IncompatibilitiesToIR(List<GuidString>? incompatibilities)
+			private IList<BepInIncompatibility>? IncompatibilitiesToIR(ICollection<GuidString>? incompatibilities)
 			{
 				return incompatibilities?.ConvertAll(guid => new BepInIncompatibility(guid));
 			}
 
-			private IList<BepInProcess>? ProcessesToIR(List<string>? processes)
+			private IList<BepInProcess>? ProcessesToIR(ICollection<string>? processes)
 			{
 				return processes?.ConvertAll(process => new BepInProcess(process));
 			}
@@ -188,7 +185,7 @@ namespace Mason.Core.Parsing.Projects.v1
 
 				if (!enumerator.MoveNext())
 				{
-					_warnings.Add(MarkupMessage.File(_project.Path, path.Range, "Path matched no handles"));
+					_warnings.Add(MarkupMessage.File(_project.Path, path.Range, Messages.UnmatchedGlob));
 					yield break;
 				}
 
@@ -241,7 +238,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				string resources = Path.Combine(_project.Directory, Compiler.ResourcesDirectory);
 
 				if (!Directory.Exists(resources))
-					throw new CompilerException(MarkupMessage.Path(resources, "No resources found"));
+					throw new CompilerException(MarkupMessage.Path(resources, Messages.ResourceDirectoryMissing));
 
 				Assets assets = new();
 

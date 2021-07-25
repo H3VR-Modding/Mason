@@ -34,7 +34,7 @@ namespace Mason.Standalone
 			}
 			catch (Exception e)
 			{
-				Error(MarkupMessage.Path(Environment.CurrentDirectory, "An unhandled exception occured: " + e));
+				Error(MarkupMessage.Path(Environment.CurrentDirectory, Messages.UnhandledException, e));
 
 				return (int) ExitCode.Internal;
 			}
@@ -43,11 +43,6 @@ namespace Mason.Standalone
 		private static string RelativePath(string path)
 		{
 			return Path.GetRelativePath(Environment.CurrentDirectory, path);
-		}
-
-		private static void Warn(MarkupMessage markup)
-		{
-			Console.WriteLine(markup.ToString("warning", RelativePath));
 		}
 
 		private static void Error(MarkupMessage markup)
@@ -67,12 +62,12 @@ namespace Mason.Standalone
 
 			string projectDir = Path.Combine(Environment.CurrentDirectory, opt.Directory);
 			if (!Directory.Exists(projectDir))
-				throw new ExitException(ExitCode.ProjectDirectoryDoesNotExist,
-					MarkupMessage.Path(projectDir, "The project directory does not exist"));
+				throw new ExitException(ExitCode.ProjectDirectoryNotFound,
+					MarkupMessage.Path(projectDir, Messages.ProjectDirectoryNotFound));
 
 			FileInfo file = new(opt.Config);
 			if (!file.Exists)
-				throw new ExitException(ExitCode.MissingConfig, MarkupMessage.Path(file.FullName, "Missing configuration file"));
+				throw new ExitException(ExitCode.ConfigFileNotFound, MarkupMessage.Path(file.FullName, Messages.ConfigFileNotFound));
 
 			Config config = ReadConfig(file);
 
@@ -95,15 +90,13 @@ namespace Mason.Standalone
 			{
 				string dir = config.Directories.Bepinex;
 				if (!Directory.Exists(dir))
-					throw new ExitException(ExitCode.BepInExDirectoryNotFound,
-						MarkupMessage.Path(dir, "Could not find the BepInEx directory"));
+					throw new ExitException(ExitCode.BepInExDirectoryNotFound, MarkupMessage.Path(dir, Messages.BepInExDirectoryNotFound));
 			}
 
 			{
 				string dir = config.Directories.Managed;
 				if (!Directory.Exists(dir))
-					throw new ExitException(ExitCode.ManagedDirectoryNotFound,
-						MarkupMessage.Path(dir, "Could not find the Markup directory"));
+					throw new ExitException(ExitCode.ManagedDirectoryNotFound, MarkupMessage.Path(dir, Messages.ManagedDirectoryNotFound));
 			}
 		}
 
@@ -123,8 +116,8 @@ namespace Mason.Standalone
 			}
 			catch (YamlException e)
 			{
-				Error(MarkupMessage.File(RelativePath(file.FullName), e.GetRange(), "Failed to read config: " + e.Message));
-				throw new ExitException(ExitCode.InvalidConfig);
+				throw new ExitException(ExitCode.InvalidConfig,
+					MarkupMessage.File(RelativePath(file.FullName), e.GetRange(), Messages.ConfigFailedDeserialization, e.Message));
 			}
 
 			config.ResolvePaths(file.DirectoryName ?? throw new IOException("Config file was not in a directory."));
@@ -220,7 +213,7 @@ namespace Mason.Standalone
 				{
 					if (!File.Exists(file))
 						throw new ExitException(ExitCode.MissingThunderstoreFiles,
-							MarkupMessage.Path(file, "Missing file is required for a Thunderstore package"));
+							MarkupMessage.Path(file, Messages.ThunderstoreFileNotFound));
 
 					await archive.AddFile(file, file, compression);
 				}
@@ -290,10 +283,11 @@ namespace Mason.Standalone
 			}
 			catch (FileNotFoundException e)
 			{
+				// All of our exceptions contain a file name. Therefore if it does not contain one, we are not expecting it.
 				if (e.FileName is not { } fileName)
 					throw;
 
-				throw new ExitException(ExitCode.MissingProjectFiles, MarkupMessage.Path(fileName, e.Message));
+				throw new ExitException(ExitCode.MissingProjectFiles, MarkupMessage.Path(fileName, Messages.MissingProjectFile, e.Message));
 			}
 			catch (CompilerException e)
 			{
@@ -302,10 +296,17 @@ namespace Mason.Standalone
 
 			IList<MarkupMessage> warnings = output.Warnings;
 
+			var count = 0;
 			foreach (MarkupMessage warning in warnings)
-				Warn(warning);
+			{
+				if (output.IgnoredMessages?.Contains(warning.Unformatted.ID) ?? false)
+					continue;
 
-			Console.WriteLine($"Compiled {output.Package} with {warnings.Count} warnings");
+				Console.WriteLine(warning.ToString("warning", RelativePath));
+				++count;
+			}
+
+			Console.WriteLine($"Compiled {output.Package} with {count} warnings");
 
 			return output;
 		}

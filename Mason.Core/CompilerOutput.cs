@@ -16,11 +16,13 @@ namespace Mason.Core
 			Warnings = parserOutput.Warnings;
 			ReferencedPaths = parserOutput.ReferencedPaths;
 			Package = parserOutput.Mod.Metadata.Package;
+			IgnoredMessages = parserOutput.IgnoredMessages;
 		}
 
 		public MemoryStream Bootstrap { get; }
 		public IList<MarkupMessage> Warnings { get; }
 		public IEnumerable<string> ReferencedPaths { get; }
+		public ICollection<MarkupMessageID>? IgnoredMessages { get; }
 		public Manifest Manifest { get; }
 		public PackageReference Package { get; }
 

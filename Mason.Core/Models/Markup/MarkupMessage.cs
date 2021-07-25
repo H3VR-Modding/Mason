@@ -5,30 +5,33 @@ namespace Mason.Core.Markup
 {
 	public class MarkupMessage
 	{
-		public static MarkupMessage Path(string path, string message)
+		public static MarkupMessage Path(string path, UnformattedMarkupMessage message, params object[] args)
 		{
-			return new(message, new MarkupLocation(path, default));
+			return new(new MarkupLocation(path, default), message, args);
 		}
 
-		public static MarkupMessage File(string path, MarkupIndex index, string message)
+		public static MarkupMessage File(string path, MarkupIndex index, UnformattedMarkupMessage message, params object[] args)
 		{
-			return new(message, new MarkupLocation(path, index));
+			return new(new MarkupLocation(path, index), message, args);
 		}
 
-		public static MarkupMessage File(string path, MarkupRange range, string message)
+		public static MarkupMessage File(string path, MarkupRange range, UnformattedMarkupMessage message, params object[] args)
 		{
-			return new(message, new MarkupLocation(path, range.Start, range.End));
+			return new(new MarkupLocation(path, range.Start, range.End), message, args);
 		}
 
-		private MarkupMessage(string message, MarkupLocation location)
+		private MarkupMessage(MarkupLocation location, UnformattedMarkupMessage unformatted, params object[] args)
 		{
-			Message = message;
 			Location = location;
+			Unformatted = unformatted;
+			Args = args;
 		}
-
-		public string Message { get; }
 
 		public MarkupLocation Location { get; }
+
+		public UnformattedMarkupMessage Unformatted { get; }
+
+		public object[] Args { get; }
 
 		private void ToString(StringBuilder builder, Func<string, string> pathToString)
 		{
@@ -54,7 +57,11 @@ namespace Mason.Core.Markup
 
 			builder
 				.Append("): ")
-				.Append(Message);
+				.Append('[')
+				.Append(Unformatted.ID.Scope)
+				.Append(Unformatted.ID.Number)
+				.Append("] ")
+				.AppendFormat(Unformatted.Content, Args);
 		}
 
 		public string ToString(Func<string, string> pathToString)

@@ -9,8 +9,8 @@
 		BepInExDirectoryNotFound,
 		MissingProjectFiles,
 		MissingThunderstoreFiles,
-		ProjectDirectoryDoesNotExist,
-		MissingConfig,
+		ProjectDirectoryNotFound,
+		ConfigFileNotFound,
 		InvalidConfig
 	}
 }

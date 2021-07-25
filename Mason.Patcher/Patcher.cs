@@ -84,17 +84,24 @@ namespace Mason.Patcher
 		{
 			IList<MarkupMessage> warnings = output.Warnings;
 
+			var count = 0;
 			if (warnings.Count > 0)
 			{
 				StringBuilder builder = new();
 
 				foreach (MarkupMessage warning in warnings)
+				{
+					if (output.IgnoredMessages?.Contains(warning.Unformatted.ID) ?? false)
+						continue;
+
 					builder.AppendLine().Append(warning.ToString("warning", Path.GetFullPath));
+					++count;
+				}
 
 				_logger.LogWarning(builder.ToString());
 			}
 
-			_logger.LogInfo($"Compiled {output.Package} with {warnings.Count} warnings");
+			_logger.LogInfo($"Compiled {output.Package} with {count} warnings");
 
 			using FileStream file = File.Create(Path.Combine(directory, "bootstrap.dll"));
 			_logger.LogDebug("Acquired output file");

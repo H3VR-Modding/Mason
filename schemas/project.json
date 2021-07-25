@@ -7,6 +7,9 @@
   "examples": [
     {
       "version": 1,
+      "ignore": [
+        "C10"
+      ],
       "dependencies": {
         "hard": {
           "ExampleHardDependency": "1.2.3"
@@ -70,7 +73,28 @@
       "description": "The version of Mason project to use when compiling",
       "examples": [
         1
-      ]
+      ],
+      "pattern": "^\\d+$"
+    },
+    "ignore": {
+      "type": "array",
+      "title": "Ignored warnings",
+      "description": "IDs of warnings to not display",
+      "examples": [
+        [
+          "C10"
+        ]
+      ],
+      "items": {
+        "type": "string",
+        "title": "Ignored warning",
+        "description": "An ID of a warning to not display. An ID is comprised by the scope (S: standalone, C: compiler, P: patcher) and number",
+        "pattern": "^[SCP]\\d+$",
+        "examples": [
+          "C10"
+        ]
+      },
+      "additionalItems": false
     },
     "dependencies": {
       "type": "object",
@@ -101,7 +125,7 @@
               "type": "string",
               "title": "Hard dependency",
               "description": "The GUID of a plugin and and the minimum version that must be present",
-              "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+(\\.[0-9]+)?)?$",
+              "pattern": "^\\d+\\.\\d+(\\.\\d+(\\.\\d+)?)?$",
               "examples": [
                 "1.2.3"
               ]

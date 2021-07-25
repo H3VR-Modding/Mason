@@ -34,8 +34,7 @@ namespace Mason.Core.Parsing.Projects
 					lastIndex = c.End.GetIndex();
 
 				if (range.HasValue)
-					throw new CompilerException(MarkupMessage.File(project.Path, range.Value,
-						"Project files must begin with the '" + tagName + "' property"));
+					throw new CompilerException(MarkupMessage.File(project.Path, range.Value, Messages.ProjectVersionMissing, tagName));
 			}
 
 			byte numeric = default;
@@ -60,13 +59,11 @@ namespace Mason.Core.Parsing.Projects
 				}
 
 				if (range.HasValue)
-					throw new CompilerException(MarkupMessage.File(project.Path, range.Value,
-						"The '" + tagName + "' property must have a numeric value."));
+					throw new CompilerException(MarkupMessage.File(project.Path, range.Value, Messages.ProjectVersionNonNumeric, tagName));
 			}
 
 			if (!Versions.TryGetValue(numeric, out IProjectParser version))
-				throw new CompilerException(MarkupMessage.File(project.Path, valueRange,
-					$"Version {numeric} is not supported by this version of Mason."));
+				throw new CompilerException(MarkupMessage.File(project.Path, valueRange, Messages.ProjectVersionUnsupported, numeric));
 
 			parser.MoveNext();
 
@@ -86,7 +83,7 @@ namespace Mason.Core.Parsing.Projects
 
 				if (range.HasValue)
 					throw new CompilerException(
-						MarkupMessage.File(project.Path, range.Value, "Project files may contain only one document"));
+						MarkupMessage.File(project.Path, range.Value, Messages.ProjectMultipleDocuments));
 			}
 
 			parser.MoveNext();

@@ -8,6 +8,6 @@ namespace Mason.Core.Projects.v1
 		// Even though we have SimpleSemVersion, plugins use System.Version
 		// Hopefully, all plugins use semver, but we cannot assume that
 		public Dictionary<GuidString, Marked<Version>>? Hard { get; set; }
-		public List<Marked<GuidString>>? Soft { get; set; }
+		public HashSet<Marked<GuidString>>? Soft { get; set; }
 	}
 }

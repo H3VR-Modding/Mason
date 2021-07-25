@@ -144,5 +144,15 @@ namespace Mason.Core
 			return @this.GetMethod ??
 			       throw new InvalidOperationException($"Property '{@this}' does not have a getter ({@this.Module.Assembly}");
 		}
+
+		public static List<TDest> ConvertAll<TSource, TDest>(this ICollection<TSource> @this, Func<TSource, TDest> predicate)
+		{
+			List<TDest> ret = new(@this.Count);
+
+			foreach (TSource item in @this)
+				ret.Add(predicate(item));
+
+			return ret;
+		}
 	}
 }

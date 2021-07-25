@@ -12,5 +12,10 @@ namespace Mason.Core
 			Value = value;
 			Range = range;
 		}
+
+		public override int GetHashCode()
+		{
+			return Value?.GetHashCode() ?? 0;
+		}
 	}
 }

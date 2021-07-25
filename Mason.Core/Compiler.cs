@@ -102,11 +102,11 @@ namespace Mason.Core
 			try
 			{
 				manifest = ManifestSerializer.Deserialize<Manifest>(json) ?? throw new CompilerException(MarkupMessage.File(file,
-					default(MarkupIndex), "Thunderstore manifest files cannot have a null body."));
+					default(MarkupIndex), Messages.ManifestNull));
 			}
 			catch (JsonSerializationException e)
 			{
-				throw new CompilerException(MarkupMessage.File(file, e.GetIndex(), e.Message));
+				throw new CompilerException(MarkupMessage.File(file, e.GetIndex(), Messages.ManifestFailedDeserialization, e.Message));
 			}
 
 			return manifest;
