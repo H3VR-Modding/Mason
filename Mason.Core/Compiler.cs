@@ -18,15 +18,18 @@ namespace Mason.Core
 {
 	public class Compiler : IDisposable
 	{
+		public const string ResourcesDirectory = "resources";
+
 		private static readonly string[] BepinexSystems =
 		{
-			"core", "patchers", "monomod", "plugins"
+			"core",
+			"patchers",
+			"monomod",
+			"plugins"
 		};
 
-		internal static readonly GuidString StratumGUID = GuidString.Parse("stratum");
 		internal static readonly Version MinimumStratumVersion = new(1, 0, 0);
-
-		public const string ResourcesDirectory = "resources";
+		internal static readonly GuidString StratumGUID = GuidString.Parse("stratum");
 
 		public static JsonSerializer ManifestSerializer { get; } = JsonSerializer.Create(new JsonSerializerSettings
 		{

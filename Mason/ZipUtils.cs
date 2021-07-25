@@ -9,7 +9,7 @@ namespace Mason.Standalone
 	internal static class ZipUtils
 	{
 		public static int ExternalAttributes = (int) (UnixPermissions.UserRead | UnixPermissions.UserWrite | UnixPermissions.GroupRead |
-		                                            UnixPermissions.GroupWrite | UnixPermissions.OtherRead) << 16;
+		                                              UnixPermissions.GroupWrite | UnixPermissions.OtherRead) << 16;
 
 		private static void Shrink(this StringBuilder @this, int length)
 		{

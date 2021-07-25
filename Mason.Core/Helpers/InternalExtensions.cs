@@ -129,12 +129,14 @@ namespace Mason.Core
 
 		public static MethodDefinition FindMethodSafe(this TypeDefinition @this, string id)
 		{
-			return @this.FindMethod(id) ?? throw new InvalidOperationException($"Method '{id}' not found in '{@this}' ({@this.Module.Assembly})");
+			return @this.FindMethod(id) ??
+			       throw new InvalidOperationException($"Method '{id}' not found in '{@this}' ({@this.Module.Assembly})");
 		}
 
 		public static PropertyDefinition FindPropertySafe(this TypeDefinition @this, string name)
 		{
-			return @this.FindProperty(name) ?? throw new InvalidOperationException($"Property '{name}' not found in '{@this}' ({@this.Module.Assembly})");
+			return @this.FindProperty(name) ??
+			       throw new InvalidOperationException($"Property '{name}' not found in '{@this}' ({@this.Module.Assembly})");
 		}
 
 		public static MethodDefinition GetGetMethodSafe(this PropertyDefinition @this)

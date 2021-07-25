@@ -126,6 +126,7 @@ namespace Mason.Standalone
 				Error(MarkupMessage.File(RelativePath(file.FullName), e.GetRange(), "Failed to read config: " + e.Message));
 				throw new ExitException(ExitCode.InvalidConfig);
 			}
+
 			config.ResolvePaths(file.DirectoryName ?? throw new IOException("Config file was not in a directory."));
 
 			return config;
@@ -171,7 +172,9 @@ namespace Mason.Standalone
 			}
 
 			await using (archive)
+			{
 				await Write(archive, opt.Output);
+			}
 		}
 
 		private async Task<MemoryStream> Zip(CompilerOutput output, CompressionLevel compression)
@@ -221,11 +224,13 @@ namespace Mason.Standalone
 
 					await archive.AddFile(file, file, compression);
 				}
+
 				Console.WriteLine("Added Thunderstore-required files");
 
 				await AddResources(archive, pluginsPrefix, output.ReferencedPaths, compression);
 				Console.WriteLine("Added resources");
 			}
+
 			backing.Position = 0;
 
 			return backing;

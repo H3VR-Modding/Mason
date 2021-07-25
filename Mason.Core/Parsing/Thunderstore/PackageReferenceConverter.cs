@@ -11,8 +11,8 @@ namespace Mason.Core.Parsing.Thunderstore
 			writer.WriteValue(value?.ToString());
 		}
 
-		public override PackageReference? ReadJson(JsonReader reader, Type objectType, PackageReference? existingValue, bool hasExistingValue,
-			JsonSerializer serializer)
+		public override PackageReference? ReadJson(JsonReader reader, Type objectType, PackageReference? existingValue,
+			bool hasExistingValue, JsonSerializer serializer)
 		{
 			Exception NewException(string message)
 			{

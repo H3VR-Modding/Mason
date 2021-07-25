@@ -54,6 +54,7 @@ namespace Mason.Patcher
 				Logger.LogFatal("Misformatted Stratum package name: " + e.Message);
 				return;
 			}
+
 			Logger.LogDebug("Read config");
 
 			CompilerParameters parameters = new(Paths.ManagedPath, Paths.BepInExRootPath)

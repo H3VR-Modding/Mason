@@ -11,7 +11,8 @@ namespace Mason.Core.Thunderstore
 				throw new FormatException("A package reference must be the author, name, and version, delimited by a hyphen (-)");
 
 			if (PackageComponentString.TryParse(split[0]) is not { } author)
-				throw new FormatException("Authors may only have the characters a-z A-Z 0-9 _ and may not start or end with an underscore (_)");
+				throw new FormatException(
+					"Authors may only have the characters a-z A-Z 0-9 _ and may not start or end with an underscore (_)");
 			if (PackageComponentString.TryParse(split[1]) is not { } name)
 				throw new FormatException("Names may only have the characters a-z A-Z 0-9 _ and may not start or end with underscore (_)");
 

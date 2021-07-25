@@ -4,11 +4,6 @@ namespace Mason.Core.Thunderstore
 {
 	public sealed class SimpleSemVersion : IEquatable<SimpleSemVersion>, IComparable<SimpleSemVersion>
 	{
-		public override bool Equals(object? obj)
-		{
-			return ReferenceEquals(this, obj) || obj is SimpleSemVersion other && Equals(other);
-		}
-
 		public static SimpleSemVersion? TryParse(string value)
 		{
 			string[] split = value.Split('.');
@@ -31,6 +26,11 @@ namespace Mason.Core.Thunderstore
 			_major = major;
 			_minor = minor;
 			_patch = patch;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return ReferenceEquals(this, obj) || (obj is SimpleSemVersion other && Equals(other));
 		}
 
 		public bool Equals(SimpleSemVersion other)

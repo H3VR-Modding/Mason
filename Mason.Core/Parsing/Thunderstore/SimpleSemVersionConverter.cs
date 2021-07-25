@@ -11,8 +11,8 @@ namespace Mason.Core.Parsing.Thunderstore
 			writer.WriteValue(value?.ToString());
 		}
 
-		public override SimpleSemVersion? ReadJson(JsonReader reader, Type objectType, SimpleSemVersion? existingValue, bool hasExistingValue,
-			JsonSerializer serializer)
+		public override SimpleSemVersion? ReadJson(JsonReader reader, Type objectType, SimpleSemVersion? existingValue,
+			bool hasExistingValue, JsonSerializer serializer)
 		{
 			Exception NewException(string message)
 			{
