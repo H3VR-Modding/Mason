@@ -17,7 +17,7 @@ using AssetPipeline = Mason.Core.IR.AssetPipeline;
 using Assets = Mason.Core.IR.Assets;
 using Version = System.Version;
 
-namespace Mason.Core.Parsing.Projects.v1
+namespace Mason.Core.Parsing.Projects
 {
 	internal class V1ProjectParser : IProjectParser
 	{
@@ -33,6 +33,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				.WithTypeConverter(new MarkedTypeConverter(box))
 				.WithTypeConverter(new GuidStringTypeConverter())
 				.WithTypeConverter(new MarkupMessageIDTypeConverter())
+				.WithTypeConverter(new VersionTypeConverter())
 				.Build();
 		}
 
@@ -69,7 +70,7 @@ namespace Mason.Core.Parsing.Projects.v1
 				catch (YamlException e)
 				{
 					throw new CompilerException(
-						MarkupMessage.File(_project.Path, e.GetRange(), Messages.ProjectFailedDeserialization, e.Message), meta.Package);
+						MarkupMessage.File(_project.Path, e.GetRange(), Messages.ProjectFailedDeserialization, e.InnerException?.Message ?? e.Message), meta.Package);
 				}
 
 				meta.Dependencies = DependenciesToIR(yaml.Dependencies);

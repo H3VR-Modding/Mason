@@ -3,7 +3,6 @@ using System.IO;
 using Mason.Core.IR;
 using Mason.Core.Markup;
 using Mason.Core.Parsing.Projects;
-using Mason.Core.Parsing.Projects.v1;
 using Mason.Core.Parsing.Thunderstore;
 using Mason.Core.Projects;
 using Mason.Core.RefsAndDefs;
