@@ -154,5 +154,14 @@ namespace Mason.Core
 
 			return ret;
 		}
+
+		public static GenericInstanceMethod MakeGenericMethod(this MethodDefinition @this, params TypeReference[] args)
+		{
+			GenericInstanceMethod generic = new(@this);
+			foreach (TypeReference arg in args)
+				generic.GenericArguments.Add(arg);
+
+			return generic;
+		}
 	}
 }

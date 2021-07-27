@@ -175,9 +175,9 @@ namespace Mason.Core
 
 			private void EmitAsset(ILProcessor il, StratumRefs.Generics tRet, Asset asset)
 			{
-				il.Emit(OpCodes.Ldstr, asset.Path);
 				il.Emit(OpCodes.Ldstr, asset.Plugin);
 				il.Emit(OpCodes.Ldstr, asset.Loader);
+				il.Emit(OpCodes.Ldstr, asset.Path);
 				il.Emit(OpCodes.Call, _module.ImportReference(tRet.AssetPipelineAddAssetMethod));
 			}
 

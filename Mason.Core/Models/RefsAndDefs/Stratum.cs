@@ -9,6 +9,10 @@ namespace Mason.Core.RefsAndDefs
 	{
 		public StratumRefs(MscorlibRefs mscorlib, ModuleDefinition stratum)
 		{
+			OpenGenericsTypes open = new(stratum);
+			SetupGenerics = new Generics(open, stratum.GetTypeSafe("Stratum.Empty"));
+			RuntimeGenerics = new Generics(open, mscorlib.IEnumeratorType);
+
 			TypeDefinition stratumPlugin = stratum.GetTypeSafe("Stratum.StratumPlugin");
 
 			StratumPluginType = stratumPlugin;
@@ -18,26 +22,24 @@ namespace Mason.Core.RefsAndDefs
 			PluginDirectoriesResourcesGetter =
 				stratum.GetTypeSafe("Stratum.PluginDirectories").Resolve().FindPropertySafe("Resources").GetGetMethodSafe();
 
-			TypeDefinition ext = stratum.GetTypeSafe("Stratum.Jobs.ExtAssetPipeline");
-			AssetPipelineBuild = ext.FindMethodSafe("Stratum.Jobs.Job`1<Stratum.Empty> Build(Stratum.Jobs.AssetPipeline`1<Stratum.Empty>)");
+			TypeDefinition ext = stratum.GetTypeSafe("Stratum.Jobs.ExtPipeline");
+			AssetPipelineBuild = ext.FindMethodSafe("Stratum.Jobs.Job`1<Stratum.Empty> Build<TSelf>(TSelf)")
+				.MakeGenericMethod(SetupGenerics.AssetPipelineType);
 			AssetPipelineBuildSequential =
-				ext.FindMethodSafe(
-					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildSequential(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>)");
+				ext.FindMethodSafe("Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildSequential<TSelf>(TSelf)")
+					.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
 			AssetPipelineBuildParallel =
-				ext.FindMethodSafe(
-					"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,Stratum.CoroutineStarter)");
-			AssetPipelineAddNestedSequential = ext.FindMethodSafe(
-				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedSequential(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>>)");
+				ext.FindMethodSafe("Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel<TSelf>(TSelf,Stratum.CoroutineStarter)")
+					.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
+			AssetPipelineAddNestedSequential = ext.FindMethodSafe("TSelf AddNestedSequential<TSelf>(TSelf,System.Action`1<TSelf>)")
+				.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
 			AssetPipelineAddNestedParallel = ext.FindMethodSafe(
-				"Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator> AddNestedParallel(Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>,System.Action`1<Stratum.Jobs.AssetPipeline`1<System.Collections.IEnumerator>>,Stratum.CoroutineStarter)");
+					"TSelf AddNestedParallel<TSelf>(TSelf,System.Action`1<TSelf>,Stratum.CoroutineStarter)")
+				.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
 
 			TypeDefinition coroutineStarter = stratum.GetTypeSafe("Stratum.CoroutineStarter");
 			CoroutineStarterType = coroutineStarter;
 			CoroutineStarterCtor = coroutineStarter.GetNativeConstructor();
-
-			OpenGenericsTypes open = new(stratum);
-			SetupGenerics = new Generics(open, stratum.GetTypeSafe("Stratum.Empty"));
-			RuntimeGenerics = new Generics(open, mscorlib.IEnumeratorType);
 
 			TypeDefinition lambda = mscorlib.ActionType.MakeGenericInstanceType(RuntimeGenerics.AssetPipelineType).Resolve();
 			AssetPipelineAddNestedPipelineLambdaType = lambda;
@@ -90,10 +92,9 @@ namespace Mason.Core.RefsAndDefs
 				AssetPipelineType = open.AssetPipeline.MakeGenericInstanceType(tRet);
 				AssetPipelineCtor = open.AssetPipeline.FindMethodSafe("System.Void .ctor(System.IO.DirectoryInfo)")
 					.MakeHostInstanceGeneric(tRet);
-				AssetPipelineAddAssetMethod =
-					open.AssetPipeline.FindMethodSafe(
-							"Stratum.Jobs.AssetPipeline`1<TRet> AddAsset(System.String,System.String,System.String)")
-						.MakeHostInstanceGeneric(tRet);
+				AssetPipelineAddAssetMethod = open.AssetPipeline.BaseType.Resolve()
+					.FindMethodSafe("Stratum.Jobs.AssetPipeline`2/TSelf AddAsset(System.String,System.String,System.String)")
+					.MakeHostInstanceGeneric(tRet, AssetPipelineType);
 
 				IReadOnlyStageContextStageGetter = open.IReadOnlyStageContext.FindPropertySafe("Stage").GetGetMethodSafe()
 					.MakeHostInstanceGeneric(tRet);
