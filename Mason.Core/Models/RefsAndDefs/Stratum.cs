@@ -22,6 +22,9 @@ namespace Mason.Core.RefsAndDefs
 			PluginDirectoriesResourcesGetter =
 				stratum.GetTypeSafe("Stratum.PluginDirectories").Resolve().FindPropertySafe("Resources").GetGetMethodSafe();
 
+			PipelineWithName = stratum.GetTypeSafe("Stratum.Jobs.Pipeline`2")
+				.FindMethodSafe("Stratum.Jobs.Pipeline`2/TSelf WithName(System.String)");
+
 			TypeDefinition ext = stratum.GetTypeSafe("Stratum.Jobs.ExtPipeline");
 			AssetPipelineBuild = ext.FindMethodSafe("Stratum.Jobs.Job`1<Stratum.Empty> Build<TSelf>(TSelf)")
 				.MakeGenericMethod(SetupGenerics.AssetPipelineType);
@@ -41,9 +44,8 @@ namespace Mason.Core.RefsAndDefs
 			CoroutineStarterType = coroutineStarter;
 			CoroutineStarterCtor = coroutineStarter.GetNativeConstructor();
 
-			TypeDefinition lambda = mscorlib.ActionType.MakeGenericInstanceType(RuntimeGenerics.AssetPipelineType).Resolve();
-			AssetPipelineAddNestedPipelineLambdaType = lambda;
-			AssetPipelineAddNestedPipelineLambdaCtor = lambda.GetNativeConstructor();
+			AssetPipelineAddNestedPipelineLambdaCtor = mscorlib.ActionType.MakeGenericInstanceType(RuntimeGenerics.AssetPipelineType)
+				.Resolve().GetNativeConstructor();
 		}
 
 		public TypeReference StratumPluginType { get; }
@@ -52,12 +54,13 @@ namespace Mason.Core.RefsAndDefs
 
 		public MethodReference PluginDirectoriesResourcesGetter { get; }
 
+		public MethodReference PipelineWithName { get; }
+
 		public MethodReference AssetPipelineBuild { get; }
 		public MethodReference AssetPipelineBuildSequential { get; }
 		public MethodReference AssetPipelineBuildParallel { get; }
 		public MethodReference AssetPipelineAddNestedSequential { get; }
 		public MethodReference AssetPipelineAddNestedParallel { get; }
-		public TypeReference AssetPipelineAddNestedPipelineLambdaType { get; }
 		public MethodReference AssetPipelineAddNestedPipelineLambdaCtor { get; }
 
 		public MethodReference CoroutineStarterCtor { get; }

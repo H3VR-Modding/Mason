@@ -11,21 +11,8 @@ namespace Mason.Core
 {
 	internal class Generator
 	{
-		private const TypeAttributes PluginAttributes = TypeAttributes.Public | TypeAttributes.Sealed;
-
-		private const TypeAttributes CompilerGeneratedAttributes = TypeAttributes.NestedPrivate | TypeAttributes.Sealed |
-		                                                           TypeAttributes.Serializable | TypeAttributes.BeforeFieldInit;
-
 		private const MethodAttributes PublicOverrideAttributes =
 			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
-
-		private const MethodAttributes LambdaMethodAttributes = MethodAttributes.Assembly | MethodAttributes.HideBySig;
-
-		private const FieldAttributes LambdaCacheAttributes = FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly;
-
-		private const MethodAttributes CctorAttributes =
-			MethodAttributes.Private | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName |
-			MethodAttributes.RTSpecialName;
 
 		private const MethodAttributes CtorAttributes =
 			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
@@ -53,54 +40,8 @@ namespace Mason.Core
 			private readonly ModuleDefinition _module;
 			private readonly TypeDefinition _type;
 
-			private CgCache? _cg;
 			private Stack<int>? _nestedIndices;
-			private FieldDefinition? _coroutineCache;
-
-			private CgCache Cg
-			{
-				get
-				{
-					if (_cg == null)
-					{
-						TypeReference @void = _module.TypeSystem.Void;
-
-						TypeDefinition type = new(null, "<>c", CompilerGeneratedAttributes);
-						type.CustomAttributes.Add(
-							new CustomAttribute(_module.ImportReference(_refs.Mscorlib.CompilerGeneratedAttributeCtor)));
-
-						FieldDefinition cache = new("<>Instance", LambdaCacheAttributes, type);
-						type.Fields.Add(cache);
-
-						MethodDefinition ctor = new(".ctor", CtorAttributes, @void);
-						{
-							ILProcessor il = ctor.Body.GetILProcessor();
-
-							il.Emit(OpCodes.Ldarg_0);
-							il.Emit(OpCodes.Call, _module.ImportReference(_refs.Mscorlib.ObjectCtor));
-							il.Emit(OpCodes.Ret);
-						}
-
-						MethodDefinition cctor = new(".cctor", CctorAttributes, @void);
-						{
-							ILProcessor il = cctor.Body.GetILProcessor();
-
-							il.Emit(OpCodes.Newobj, ctor);
-							il.Emit(OpCodes.Stsfld, cache);
-							il.Emit(OpCodes.Ret);
-						}
-
-						type.Methods.Add(cctor);
-						type.Methods.Add(ctor);
-
-						_type.NestedTypes.Add(type);
-
-						_cg = new CgCache(type, cache);
-					}
-
-					return _cg;
-				}
-			}
+			private FieldDefinition? _startCoroutine;
 
 			private Stack<int> NestedIndices => _nestedIndices ??= new Stack<int>();
 
@@ -120,12 +61,11 @@ namespace Mason.Core
 				_module = asm.MainModule;
 
 				TypeReference @base = _module.ImportReference(_refs.Stratum.StratumPluginType);
-				_type = new TypeDefinition(null, "Plugin", PluginAttributes, @base);
+				_type = new TypeDefinition(null, "Plugin", TypeAttributes.Public | TypeAttributes.Sealed, @base);
 				_module.Types.Add(_type);
 
-				_cg = null;
 				_nestedIndices = null;
-				_coroutineCache = null;
+				_startCoroutine = null;
 			}
 
 			private void EmitStartCoroutineNewobj(ILProcessor il)
@@ -137,32 +77,32 @@ namespace Mason.Core
 
 			private void EmitStartCoroutineReference(ILProcessor il)
 			{
-				if (_coroutineCache == null)
+				if (_startCoroutine == null)
 				{
 					// First call
 
-					_coroutineCache = new FieldDefinition("<>CoroutineStarter", FieldAttributes.Public | FieldAttributes.Static,
+					_startCoroutine = new FieldDefinition("_startCoroutine", FieldAttributes.Private,
 						_module.ImportReference(_refs.Stratum.CoroutineStarterType));
 
-					Cg.Type.Fields.Add(_coroutineCache);
+					_type.Fields.Add(_startCoroutine);
 
 					EmitStartCoroutineNewobj(il);
 					il.Emit(OpCodes.Dup);
-					il.Emit(OpCodes.Stsfld, _coroutineCache);
+					il.Emit(OpCodes.Stsfld, _startCoroutine);
 				}
 				else
 				{
-					il.Emit(OpCodes.Ldsfld, _coroutineCache);
+					il.Emit(OpCodes.Ldsfld, _startCoroutine);
 				}
 			}
 
 			private void EmitStartCoroutineReferenceLast(ILProcessor il)
 			{
-				if (_coroutineCache == null)
+				if (_startCoroutine == null)
 					// No need to store the last call
 					EmitStartCoroutineNewobj(il);
 				else
-					il.Emit(OpCodes.Ldsfld, _coroutineCache);
+					il.Emit(OpCodes.Ldsfld, _startCoroutine);
 			}
 
 			private void EmitAssetPipelineCtor(ILProcessor il, StratumRefs.Generics tRet)
@@ -178,7 +118,7 @@ namespace Mason.Core
 				il.Emit(OpCodes.Ldstr, asset.Plugin);
 				il.Emit(OpCodes.Ldstr, asset.Loader);
 				il.Emit(OpCodes.Ldstr, asset.Path);
-				il.Emit(OpCodes.Call, _module.ImportReference(tRet.AssetPipelineAddAssetMethod));
+				il.Emit(OpCodes.Callvirt, _module.ImportReference(tRet.AssetPipelineAddAssetMethod));
 			}
 
 			private void EmitAssetPipelineExecutor(ILProcessor il, StratumRefs.Generics tRet)
@@ -199,7 +139,7 @@ namespace Mason.Core
 				MethodDefinition lambda;
 				{
 					TypeReference @void = _module.TypeSystem.Void;
-					lambda = new MethodDefinition(name, LambdaMethodAttributes, @void);
+					lambda = new MethodDefinition(name, MethodAttributes.Assembly | MethodAttributes.HideBySig, @void);
 					lambda.Parameters.Add(new ParameterDefinition("pipeline", ParameterAttributes.None,
 						_module.ImportReference(_refs.Stratum.RuntimeGenerics.AssetPipelineType)));
 
@@ -212,10 +152,10 @@ namespace Mason.Core
 						lambdaIL.Emit(OpCodes.Ret);
 					}
 
-					Cg.Type.Methods.Add(lambda);
+					_type.Methods.Add(lambda);
 				}
 
-				il.Emit(OpCodes.Ldsfld, Cg.Cache);
+				il.Emit(OpCodes.Ldarg_0);
 				il.Emit(OpCodes.Ldftn, lambda);
 				il.Emit(OpCodes.Newobj, _module.ImportReference(_refs.Stratum.AssetPipelineAddNestedPipelineLambdaCtor));
 
@@ -231,11 +171,17 @@ namespace Mason.Core
 					EmitStartCoroutineReference(il);
 				}
 
-				il.Emit(OpCodes.Call, _module.ImportReference(adder));
+				il.Emit(OpCodes.Callvirt, _module.ImportReference(adder));
 			}
 
 			private void EmitAssetPipelineBody(ILProcessor il, AssetPipeline pipeline)
 			{
+				if (pipeline.Name is { } name)
+				{
+					il.Emit(OpCodes.Ldstr, name);
+					il.Emit(OpCodes.Callvirt, _refs.Stratum.PipelineWithName);
+				}
+
 				var i = 0;
 				foreach (AssetPipeline nested in pipeline.Nested)
 				{
@@ -279,7 +225,7 @@ namespace Mason.Core
 					foreach (Asset asset in assets)
 						EmitAsset(il, generics, asset);
 
-					il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.AssetPipelineBuild));
+					il.Emit(OpCodes.Callvirt, _module.ImportReference(_refs.Stratum.AssetPipelineBuild));
 					EmitAssetPipelineExecutor(il, generics);
 				}
 
@@ -308,12 +254,12 @@ namespace Mason.Core
 
 					if (pipeline.Sequential)
 					{
-						il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.AssetPipelineBuildSequential));
+						il.Emit(OpCodes.Callvirt, _module.ImportReference(_refs.Stratum.AssetPipelineBuildSequential));
 					}
 					else
 					{
 						EmitStartCoroutineReferenceLast(il);
-						il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.AssetPipelineBuildParallel));
+						il.Emit(OpCodes.Callvirt, _module.ImportReference(_refs.Stratum.AssetPipelineBuildParallel));
 					}
 
 					EmitAssetPipelineExecutor(il, generics);
@@ -411,18 +357,6 @@ namespace Mason.Core
 				// an issue, but net35 support has been dropped, so any fix would not work for us.
 
 				return _module.Assembly;
-			}
-
-			private class CgCache
-			{
-				public CgCache(TypeDefinition type, FieldReference cache)
-				{
-					Type = type;
-					Cache = cache;
-				}
-
-				public TypeDefinition Type { get; }
-				public FieldReference Cache { get; }
 			}
 		}
 	}
