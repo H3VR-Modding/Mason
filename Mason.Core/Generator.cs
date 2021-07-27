@@ -314,7 +314,8 @@ namespace Mason.Core
 
 						args = new CustomAttributeArgument[]
 						{
-							new(str, source.DependencyGUID), new(str, source.MinimumVersion.ToString())
+							new(str, source.DependencyGUID),
+							new(str, source.MinimumVersion.ToString())
 						};
 					}
 					else

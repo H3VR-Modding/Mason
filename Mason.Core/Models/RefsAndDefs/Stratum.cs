@@ -32,7 +32,8 @@ namespace Mason.Core.RefsAndDefs
 				ext.FindMethodSafe("Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildSequential<TSelf>(TSelf)")
 					.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
 			AssetPipelineBuildParallel =
-				ext.FindMethodSafe("Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel<TSelf>(TSelf,Stratum.CoroutineStarter)")
+				ext.FindMethodSafe(
+						"Stratum.Jobs.Job`1<System.Collections.IEnumerator> BuildParallel<TSelf>(TSelf,Stratum.CoroutineStarter)")
 					.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);
 			AssetPipelineAddNestedSequential = ext.FindMethodSafe("TSelf AddNestedSequential<TSelf>(TSelf,System.Action`1<TSelf>)")
 				.MakeGenericMethod(RuntimeGenerics.AssetPipelineType);

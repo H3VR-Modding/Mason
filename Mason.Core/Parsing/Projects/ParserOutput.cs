@@ -11,7 +11,8 @@ namespace Mason.Core.Parsing.Projects
 		public IEnumerable<string> ReferencedPaths { get; }
 		public ICollection<MarkupMessageID>? IgnoredMessages { get; }
 
-		public ParserOutput(Mod mod, IList<MarkupMessage> warnings, IEnumerable<string> referencedPaths, ICollection<MarkupMessageID>? ignoredMessages)
+		public ParserOutput(Mod mod, IList<MarkupMessage> warnings, IEnumerable<string> referencedPaths,
+			ICollection<MarkupMessageID>? ignoredMessages)
 		{
 			Mod = mod;
 			Warnings = warnings;
