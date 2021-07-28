@@ -15,7 +15,7 @@ yaml_zip=$(mktemp)
 mkdir -p "$patchers"
 
 curl -o "$yaml_zip" -L "$LATEST_UNITY_SUBSET_35"
-unzip "$yaml_zip" "$patchers/YamlDotNet.dll"
+unzip -p "$yaml_zip" YamlDotNet.dll > "$patchers/YamlDotNet.dll"
 
 rm -rf "$yaml_zip"
 
