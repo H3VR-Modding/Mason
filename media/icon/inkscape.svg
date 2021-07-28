@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1024"
+   height="1024"
+   viewBox="0 0 270.93333 270.93333"
+   version="1.1"
+   id="svg1013"
+   inkscape:version="1.1 (c4e8f9ed74, 2021-05-24)"
+   sodipodi:docname="inkscape.svg"
+   inkscape:export-filename="/home/ash/Development/csharp/Mason/media/icon/128.png"
+   inkscape:export-xdpi="12"
+   inkscape:export-ydpi="12"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs1007">
+    <inkscape:path-effect
+       effect="mirror_symmetry"
+       start_point="241.30078,55.033203"
+       end_point="241.30078,216.06836"
+       center_point="241.30078,135.55078"
+       id="path-effect160142"
+       is_visible="true"
+       lpeversion="1.1"
+       mode="vertical"
+       discard_orig_path="false"
+       fuse_paths="true"
+       oposite_fuse="false"
+       split_items="false"
+       split_open="false" />
+    <inkscape:path-effect
+       center_point="235.00861,143.80658"
+       end_point="235.00861,215.14661"
+       start_point="85.695692,215.9"
+       effect="mirror_symmetry"
+       id="path-effect104177"
+       is_visible="true"
+       lpeversion="1.1"
+       mode="vertical"
+       discard_orig_path="false"
+       fuse_paths="true"
+       oposite_fuse="false"
+       split_items="false"
+       split_open="false" />
+    <inkscape:path-effect
+       effect="offset"
+       id="path-effect1154"
+       is_visible="true"
+       lpeversion="1"
+       linejoin_type="miter"
+       unit="px"
+       offset="-64"
+       miter_limit="4"
+       attempt_force_join="true"
+       update_on_knot_move="true" />
+    <inkscape:path-effect
+       effect="powerclip"
+       id="path-effect944"
+       is_visible="true"
+       lpeversion="1"
+       inverse="true"
+       flatten="false"
+       hide_clip="false"
+       message="Use fill-rule evenodd on &lt;b&gt;fill and stroke&lt;/b&gt; dialog if no flatten result after convert clip to paths." />
+    <inkscape:path-effect
+       effect="powerclip"
+       id="path-effect901"
+       is_visible="true"
+       lpeversion="1"
+       inverse="true"
+       flatten="false"
+       hide_clip="false"
+       message="Use fill-rule evenodd on &lt;b&gt;fill and stroke&lt;/b&gt; dialog if no flatten result after convert clip to paths." />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.1289062"
+     inkscape:cx="415.00348"
+     inkscape:cy="406.58825"
+     inkscape:document-units="mm"
+     inkscape:current-layer="svg1013"
+     inkscape:document-rotation="0"
+     showgrid="true"
+     inkscape:window-width="2560"
+     inkscape:window-height="1371"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     showguides="true"
+     inkscape:object-paths="false"
+     inkscape:snap-smooth-nodes="true"
+     inkscape:guide-bbox="true"
+     inkscape:pagecheckerboard="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1576"
+       spacingx="4.2333333"
+       spacingy="4.2333333"
+       empspacing="4"
+       color="#ff00ee"
+       opacity="0.24705882"
+       empcolor="#ff00f4"
+       empopacity="0.6" />
+    <sodipodi:guide
+       position="135.46666,135.46667"
+       orientation="0,-1"
+       id="guide1106" />
+    <sodipodi:guide
+       position="135.46666,118.53333"
+       orientation="1,0"
+       id="guide1108" />
+    <sodipodi:guide
+       position="135.46666,50.800001"
+       orientation="0,-1"
+       id="guide1122" />
+    <sodipodi:guide
+       position="135.46666,220.13333"
+       orientation="0,-1"
+       id="guide1124" />
+    <sodipodi:guide
+       position="50.799999,135.46667"
+       orientation="1,0"
+       id="guide60093" />
+    <sodipodi:guide
+       position="220.13333,135.46667"
+       orientation="1,0"
+       id="guide60095" />
+    <sodipodi:guide
+       position="25.399999,135.46667"
+       orientation="1,0"
+       id="guide111502" />
+    <sodipodi:guide
+       position="245.53333,148.16667"
+       orientation="1,0"
+       id="guide111542" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata1010">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     id="rect3593"
+     style="display:inline;fill:#322d2d;fill-opacity:1;stroke:#cbd2e2;stroke-width:16.9333;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 16.933333,0 H 254 c 8.46666,0 16.93333,8.4666666 16.93333,16.933333 V 254 c 0,8.46666 -8.46667,16.93333 -16.93333,16.93333 H 16.933333 C 8.4666666,270.93333 0,262.46666 0,254 V 16.933333 C 0,8.4666666 8.4666666,0 16.933333,0 Z"
+     sodipodi:nodetypes="ccccccccc"
+     inkscape:label="Background"
+     sodipodi:insensitive="true" />
+  <image
+     preserveAspectRatio="none"
+     inkscape:svg-dpi="96"
+     width="270.93332"
+     height="270.93332"
+     xlink:href="../letter.svg"
+     id="image1318"
+     x="0"
+     y="0"
+     inkscape:label="M"
+     sodipodi:insensitive="true" />
+</svg>

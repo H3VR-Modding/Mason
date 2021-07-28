@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+      <PackageVersion>1.0.0</PackageVersion>
+
       <OutputType>Exe</OutputType>
       <TargetFramework>net5.0</TargetFramework>
       <Nullable>enable</Nullable>
@@ -16,11 +18,13 @@
       <RepositoryType>git</RepositoryType>
       <Description>Compiles project files into a BepInEx plugin that utilizes Stratum asset loading.</Description>
       <PackageTags>compiler bepinex stratum plugin cil tool</PackageTags>
+      <PackageIcon>icon.png</PackageIcon>
 
-      <PackageVersion>1.0.0</PackageVersion>
-      <AssemblyVersion>1.0.0</AssemblyVersion>
-      <FileVersion>1.0.0</FileVersion>
     </PropertyGroup>
+
+    <ItemGroup>
+      <None Include="..\media\icon\128.png" Pack="true" PackagePath="icon.png" />
+    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Mason.Core\Mason.Core.csproj" />

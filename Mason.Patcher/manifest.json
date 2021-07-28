@@ -1,0 +1,10 @@
+{
+  "author": "Stratum",
+  "name": "Mason",
+  "version_number": "1.0.0",
+  "description": "A compiler that compiles project directories into BepInEx plugins that utilize Stratum asset loading.",
+  "dependencies": [
+    "Stratum-Stratum-1.0.0"
+  ],
+  "website_url": "https://github.com/H3VR-Modding/Mason"
+}
