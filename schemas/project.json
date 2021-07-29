@@ -41,7 +41,7 @@
               "loader": "ExampleLoader"
             }
           ],
-          "pipelines": [
+          "nested": [
             {
               "name": "Ordered",
               "sequential": true,
@@ -199,7 +199,7 @@
     "assets": {
       "type": "object",
       "title": "Assets",
-      "description": "The assets to load",
+      "description": "Resources to be loaded via specific loaders",
       "examples": [
         {
           "setup": [
@@ -218,7 +218,7 @@
                 "loader": "ExampleLoader"
               }
             ],
-            "pipelines": [
+            "nested": [
               {
                 "name": "Ordered",
                 "sequential": true,
@@ -243,7 +243,7 @@
         "setup": {
           "type": "array",
           "title": "Assets",
-          "description": "The assets to load sequentially during the setup stage",
+          "description": "The assets to load during the setup stage",
           "examples": [
             [
               {
@@ -327,7 +327,7 @@
                 "loader": "ExampleLoader"
               }
             ],
-            "pipelines": [
+            "nested": [
               {
                 "name": "Ordered",
                 "sequential": true,
@@ -361,7 +361,7 @@
         "sequential": {
           "type": "boolean",
           "title": "Sequential",
-          "description": "Loads assets sequentially, rather than in parallel",
+          "description": "Waits for nested pipelines and assets to finish loading completely before beginning to load the next one",
           "examples": [
             true
           ]
@@ -396,8 +396,32 @@
           },
           "additionalItems": false
         },
-        "pipeline": {
-          "$ref": "#/definitions/asset_pipeline"
+        "nested": {
+          "type": "array",
+          "title": "Nested Pipelines",
+          "description": "Additional pipelines to run. These will be ran before the current pipeline's assets and respect the 'sequential' property.",
+          "examples": [
+            {
+              "name": "Ordered",
+              "sequential": true,
+              "assets": [
+                {
+                  "path" : "runtime/ordered/first",
+                  "plugin": "ExamplePlugin",
+                  "loader": "ExampleLoader"
+                },
+                {
+                  "path" : "runtime/ordered/second",
+                  "plugin": "ExamplePlugin",
+                  "loader": "ExampleLoader"
+                }
+              ]
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/asset_pipeline"
+          },
+          "additionalItems": false
         }
       },
       "additionalProperties": false
