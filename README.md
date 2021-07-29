@@ -12,7 +12,7 @@ If you have never used Mason before, try using it standalone before using it as 
 ### Standalone
 The easiest way to install the standalone version is to install from NuGet, but this only works if you have the .NET SDK installed:
 ```bash
-$ dotnet tool install --global Mason
+dotnet tool install --global Mason
 ```
 
 Most people don't though, so if you are like most people, go to [the releases page](https://github.com/H3VR-Modding/Mason/releases) and download a release. Extract this to a folder of your choosing, but you will need to add it to the PATH variable. [Here's a guide on how to do that](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/).  
