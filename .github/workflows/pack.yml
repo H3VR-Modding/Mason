@@ -30,6 +30,13 @@ jobs:
       - name: Pack Thunderstore
         run: ./pack.sh Mason/nupkg/Thunderstore.zip
 
+      - name: Publish Standlone
+        run: |
+          dotnet publish -c Release --no-build Mason
+          pushd Mason/bin/Release/net5.0/publish
+          zip -9r ../../../../nupkg/Standlone.zip .
+          popd
+
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
