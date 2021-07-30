@@ -34,7 +34,7 @@ jobs:
         run: |
           dotnet publish -c Release --no-build Mason
           pushd Mason/bin/Release/net5.0/publish
-          zip -9r ../../../../nupkg/Standlone.zip .
+          zip -9r ../../../../nupkg/Standalone.zip .
           popd
 
       - name: Upload
