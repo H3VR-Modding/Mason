@@ -45,8 +45,8 @@ namespace Mason.Core.RefsAndDefs
 			CoroutineStarterType = coroutineStarter;
 			CoroutineStarterCtor = coroutineStarter.GetNativeConstructor();
 
-			AssetPipelineAddNestedPipelineLambdaCtor = mscorlib.ActionType.MakeGenericInstanceType(RuntimeGenerics.AssetPipelineType)
-				.Resolve().GetNativeConstructor();
+			AssetPipelineAddNestedPipelineLambdaCtor = mscorlib.ActionType.Resolve().GetNativeConstructor()
+				.MakeHostInstanceGeneric(RuntimeGenerics.AssetPipelineType);
 		}
 
 		public TypeReference StratumPluginType { get; }

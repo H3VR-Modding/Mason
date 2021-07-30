@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx;
 using Mason.Core.IR;
 using Mason.Core.RefsAndDefs;
@@ -40,10 +41,7 @@ namespace Mason.Core
 			private readonly ModuleDefinition _module;
 			private readonly TypeDefinition _type;
 
-			private Stack<int>? _nestedIndices;
-			private FieldDefinition? _startCoroutine;
-
-			private Stack<int> NestedIndices => _nestedIndices ??= new Stack<int>();
+			private readonly Stack<int> _nestedIndices;
 
 			public Scoped(Generator generator, Mod mod)
 			{
@@ -64,45 +62,36 @@ namespace Mason.Core
 				_type = new TypeDefinition(null, "Plugin", TypeAttributes.Public | TypeAttributes.Sealed, @base);
 				_module.Types.Add(_type);
 
-				_nestedIndices = null;
-				_startCoroutine = null;
+				_nestedIndices = new Stack<int>();
 			}
 
-			private void EmitStartCoroutineNewobj(ILProcessor il)
+			private void EmitStartCoroutineReference(ILProcessor il, MethodDefinition ctor, ref FieldDefinition? startCoroutine)
 			{
-				il.Emit(OpCodes.Ldarg_0);
-				il.Emit(OpCodes.Ldftn, _module.ImportReference(_refs.UnityEngine.StartCoroutineMethod));
-				il.Emit(OpCodes.Newobj, _module.ImportReference(_refs.Stratum.CoroutineStarterCtor));
-			}
-
-			private void EmitStartCoroutineReference(ILProcessor il)
-			{
-				if (_startCoroutine == null)
+				if (startCoroutine == null)
 				{
 					// First call
 
-					_startCoroutine = new FieldDefinition("_startCoroutine", FieldAttributes.Private,
+					startCoroutine = new FieldDefinition("_startCoroutine", FieldAttributes.Private | FieldAttributes.InitOnly,
 						_module.ImportReference(_refs.Stratum.CoroutineStarterType));
 
-					_type.Fields.Add(_startCoroutine);
+					_type.Fields.Add(startCoroutine);
 
-					EmitStartCoroutineNewobj(il);
-					il.Emit(OpCodes.Dup);
-					il.Emit(OpCodes.Stsfld, _startCoroutine);
-				}
-				else
-				{
-					il.Emit(OpCodes.Ldsfld, _startCoroutine);
-				}
-			}
+					Collection<Instruction> ctorIl = ctor.Body.Instructions;
 
-			private void EmitStartCoroutineReferenceLast(ILProcessor il)
-			{
-				if (_startCoroutine == null)
-					// No need to store the last call
-					EmitStartCoroutineNewobj(il);
-				else
-					il.Emit(OpCodes.Ldsfld, _startCoroutine);
+					int BeforeRet()
+					{
+						return ctorIl.Count - 1;
+					}
+
+					ctorIl.Insert(BeforeRet(), Instruction.Create(OpCodes.Ldarg_0));
+					ctorIl.Insert(BeforeRet(), Instruction.Create(OpCodes.Dup));
+					ctorIl.Insert(BeforeRet(), Instruction.Create(OpCodes.Ldftn, _module.ImportReference(_refs.UnityEngine.StartCoroutineMethod)));
+					ctorIl.Insert(BeforeRet(), Instruction.Create(OpCodes.Newobj, _module.ImportReference(_refs.Stratum.CoroutineStarterCtor)));
+					ctorIl.Insert(BeforeRet(), Instruction.Create(OpCodes.Stfld, startCoroutine));
+				}
+
+				il.Emit(OpCodes.Ldarg_0);
+				il.Emit(OpCodes.Ldfld, startCoroutine);
 			}
 
 			private void EmitAssetPipelineCtor(ILProcessor il, StratumRefs.Generics tRet)
@@ -130,11 +119,10 @@ namespace Mason.Core
 				il.Emit(OpCodes.Callvirt, _module.ImportReference(tRet.JobInvokeMethod));
 			}
 
-			private void EmitNestedPipeline(ILProcessor il, AssetPipeline pipeline)
+			private void EmitNestedPipeline(ILProcessor il, AssetPipeline pipeline, MethodDefinition ctor,
+				ref FieldDefinition? startCoroutine)
 			{
-				var name = "<OnRuntime>";
-				foreach (int index in NestedIndices)
-					name += "_" + index;
+				var name = _nestedIndices.Aggregate("<OnRuntime>", (current, index) => current + ("_" + index));
 
 				MethodDefinition lambda;
 				{
@@ -147,7 +135,7 @@ namespace Mason.Core
 						ILProcessor lambdaIL = lambda.Body.GetILProcessor();
 
 						lambdaIL.Emit(OpCodes.Ldarg_1);
-						EmitAssetPipelineBody(lambdaIL, pipeline);
+						EmitAssetPipelineBody(lambdaIL, pipeline, ctor, ref startCoroutine);
 						lambdaIL.Emit(OpCodes.Pop);
 						lambdaIL.Emit(OpCodes.Ret);
 					}
@@ -168,13 +156,14 @@ namespace Mason.Core
 				{
 					adder = _refs.Stratum.AssetPipelineAddNestedParallel;
 
-					EmitStartCoroutineReference(il);
+					EmitStartCoroutineReference(il, ctor, ref startCoroutine);
 				}
 
 				il.Emit(OpCodes.Callvirt, _module.ImportReference(adder));
 			}
 
-			private void EmitAssetPipelineBody(ILProcessor il, AssetPipeline pipeline)
+			private void EmitAssetPipelineBody(ILProcessor il, AssetPipeline pipeline, MethodDefinition ctor,
+				ref FieldDefinition? startCoroutine)
 			{
 				if (pipeline.Name is { } name)
 				{
@@ -185,16 +174,16 @@ namespace Mason.Core
 				var i = 0;
 				foreach (AssetPipeline nested in pipeline.Nested)
 				{
-					NestedIndices.Push(i++);
-					EmitNestedPipeline(il, nested);
-					NestedIndices.Pop();
+					_nestedIndices.Push(i++);
+					EmitNestedPipeline(il, nested, ctor, ref startCoroutine);
+					_nestedIndices.Pop();
 				}
 
 				foreach (Asset asset in pipeline.Assets)
 					EmitAsset(il, _refs.Stratum.RuntimeGenerics, asset);
 			}
 
-			private void AddCtor()
+			private MethodDefinition AddCtor()
 			{
 				MethodDefinition method = new(".ctor", CtorAttributes, _module.TypeSystem.Void);
 
@@ -205,6 +194,8 @@ namespace Mason.Core
 				il.Emit(OpCodes.Ret);
 
 				_type.Methods.Add(method);
+
+				return method;
 			}
 
 			private void AddSetupMethod()
@@ -234,7 +225,7 @@ namespace Mason.Core
 				_type.Methods.Add(method);
 			}
 
-			private void AddRuntimeMethod()
+			private void AddRuntimeMethod(MethodDefinition ctor)
 			{
 				StratumRefs.Generics generics = _refs.Stratum.RuntimeGenerics;
 
@@ -248,9 +239,11 @@ namespace Mason.Core
 
 				if (pipeline != null)
 				{
+					FieldDefinition? startCoroutine = null;
+
 					EmitAssetPipelineCtor(il, generics);
 
-					EmitAssetPipelineBody(il, pipeline);
+					EmitAssetPipelineBody(il, pipeline, ctor, ref startCoroutine);
 
 					if (pipeline.Sequential)
 					{
@@ -258,7 +251,7 @@ namespace Mason.Core
 					}
 					else
 					{
-						EmitStartCoroutineReferenceLast(il);
+						EmitStartCoroutineReference(il, ctor, ref startCoroutine);
 						il.Emit(OpCodes.Callvirt, _module.ImportReference(_refs.Stratum.AssetPipelineBuildParallel));
 					}
 
@@ -348,9 +341,10 @@ namespace Mason.Core
 			public AssemblyDefinition Generate()
 			{
 				AddMetadata();
-				AddCtor();
+
+				MethodDefinition ctor = AddCtor();
 				AddSetupMethod();
-				AddRuntimeMethod();
+				AddRuntimeMethod(ctor);
 
 				// If you see another mscorlib reference:
 				// All our libs depend on mscorlib with a "" Culture, but Mono.Cecil uses a null Culture internally. It's
