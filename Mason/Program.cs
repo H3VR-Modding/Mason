@@ -172,7 +172,7 @@ namespace Mason.Standalone
 
 		private async Task<MemoryStream> Zip(CompilerOutput output, CompressionLevel compression)
 		{
-			const string pluginsPrefix = "files/plugins/";
+			const string pluginsPrefix = "plugins/";
 
 			DateTimeOffset now = DateTimeOffset.Now;
 			MemoryStream backing = new();
