@@ -59,7 +59,7 @@ jobs:
           path: thunderstore/out/*
 
       - name: Publish Standalone (Windows)
-        run: dotnet publish -c Release -r windows-x64 --no-self-contained Mason
+        run: dotnet publish -c Release -r win-x64 --no-self-contained Mason
 
       - name: Upload Standalone (Windows)
         uses: actions/upload-artifact@v2
