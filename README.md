@@ -29,11 +29,11 @@ The patcher plugin can be downloaded as [a Thunderstore package](https://h3vr.th
 To use the standalone version, simply follow the guide on the [the quickstart repository](https://github.com/H3VR-Modding/Mason-Quickstart).
 
 ### Patcher Plugin
-To use the patcher plugin, first navigate to your r2modman profile directory (if you are not using r2modman, this would be your game directory). Enter the `BepInEx/plugins` folder, which will house your project folder. Then, follow the guide on [the quickstart repository](https://github.com/H3VR-Modding/Mason-Quickstart) with a few minor adjustments:
-- When you clone/download the files, download them to a directory within `BepInEx/plugins` folder.
+Follow the guide on [the quickstart repository](https://github.com/H3VR-Modding/Mason-Quickstart) with a few minor adjustments:
+- When you clone/download the files, do so to a directory within your r2modman profile's `BepInEx/plugins` folder.
 - Ignore the building step; the patcher plugin does the building for you.
 
-For more experienced users, it is recommended that you clone the repository to a directory of your choosing, then use a symlink within the `BepInEx/plugins` directory. This keeps your git projects out of your r2modman profiles, but has the same functionality.
+For more experienced users, it is recommended that you clone the repository to a directory of your choosing, then use a directory symlink. This keeps your git repositories out of your r2modman profiles, but has the same functionality.
 
 ## Versioning
 The version of this repository is based on the two consumable projects: standalone and patcher plugin. It does not include the public API of the core project, which may change at any time.
