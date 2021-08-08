@@ -1,7 +1,7 @@
 {
   "author": "Stratum",
   "name": "Mason",
-  "version_number": "1.0.1",
+  "version_number": "AUTOMATED",
   "description": "A compiler that compiles project directories into BepInEx plugins that utilize Stratum asset loading.",
   "dependencies": [
     "Stratum-Stratum-1.0.0"
