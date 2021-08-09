@@ -1,4 +1,4 @@
-# Mason <img src="media/icon/128.png" height="92" align="left" />
+# Mason <img src="https://raw.githubusercontent.com/H3VR-Modding/Mason/main/media/icon/128.png" height="92" align="left" />
 
 [![releases](https://img.shields.io/github/v/release/H3VR-Modding/Mason)](https://github.com/H3VR-Modding/Mason/releases) [![nuget](https://img.shields.io/nuget/v/mason)](https://www.nuget.org/packages/mason) [![chat](https://img.shields.io/discord/777351065950879744?label=chat&logo=discord&logoColor=white)](https://discord.com/invite/g8xeFyt42j)
 
