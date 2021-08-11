@@ -216,8 +216,9 @@ namespace Mason.Core
 					foreach (Asset asset in assets)
 						EmitAsset(il, generics, asset);
 
-					il.Emit(OpCodes.Callvirt, _module.ImportReference(_refs.Stratum.AssetPipelineBuild));
+					il.Emit(OpCodes.Call, _module.ImportReference(_refs.Stratum.AssetPipelineBuild));
 					EmitAssetPipelineExecutor(il, generics);
+					il.Emit(OpCodes.Pop);
 				}
 
 				il.Emit(OpCodes.Ret);
