@@ -1,0 +1,10 @@
+version: 1
+dependencies:
+  hard:
+    h3vr.otherloader: 1.0.0
+assets:
+  runtime:
+    assets:
+      - path: vepr
+        plugin: h3vr.otherloader
+        loader: item

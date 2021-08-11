@@ -1,0 +1,10 @@
+{
+  "author": "nayr31",
+  "name": "VeprHunter",
+  "version_number": "1.1.0",
+  "dependencies": [
+    "devyndamonster-OtherLoader-1.0.0"
+  ],
+  "description": "Adds a russian rifle chambered in 7.62x51.",
+  "website_url": ""
+}

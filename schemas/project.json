@@ -361,7 +361,7 @@
         "sequential": {
           "type": "boolean",
           "title": "Sequential",
-          "description": "Waits for nested pipelines and assets to finish loading completely before beginning to load the next one",
+          "description": "Waits for the previous nested pipeline or asset to finish loading before beginning to load the next one",
           "examples": [
             true
           ]
@@ -369,7 +369,7 @@
         "assets": {
           "type": "array",
           "title": "Assets",
-          "description": "The assets to load",
+          "description": "The assets to load as part of this pipeline. These will be ran after nested pipelines.",
           "examples": [
             [
               {

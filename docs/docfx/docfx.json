@@ -1,0 +1,44 @@
+{
+  "build": {
+    "content": [
+      {
+        "src": "../src",
+        "files": [
+          "**/*.md",
+          "**/toc.yml"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "src": "../src",
+        "files": [
+          "**/files/**",
+          "**/images/**"
+        ]
+      }
+    ],
+    "xrefService": [
+      "https://xref.docs.microsoft.com/query?uid={uid}"
+    ],
+    "dest": "_site",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "globalMetadata": {
+      "_appTitle": "Mason",
+      "_appFooter": "Created by the Stratum Team",
+      "_appLogoPath": "images/icon.png",
+      "_appFaviconPath": "images/icon.png"
+    },
+    "template": [
+      "default",
+      "templates/discordfx"
+    ],
+    "postProcessors": [],
+    "markdownEngineName": "markdig",
+    "noLangKeyword": false,
+    "keepFileLink": false,
+    "cleanupCacheHistory": false,
+    "disableGitFeatures": false
+  }
+}

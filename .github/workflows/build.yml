@@ -1,25 +1,27 @@
 on:
   push:
     paths-ignore:
-      - '.vscode/**/*'
+      - '.vscode/**'
       - '.editorconfig'
       - '.gitattributes'
       - '.gitignore'
+      - 'docs/**'
       - 'LICENSE'
       - 'README.md'
       - 'Mason.sln.DotSettings'
   pull_request:
     paths-ignore:
-      - '.vscode/**/*'
+      - '.vscode/**'
       - '.editorconfig'
       - '.gitattributes'
       - '.gitignore'
+      - 'docs/**'
       - 'LICENSE'
       - 'README.md'
       - 'Mason.sln.DotSettings'
 
 jobs:
-  any:
+  build:
     runs-on: ubuntu-latest
 
     steps:
