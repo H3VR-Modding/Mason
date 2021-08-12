@@ -6,7 +6,7 @@ on:
       - 'docs/**'
 
 jobs:
-  any:
+  docs:
     runs-on: ubuntu-latest
 
     steps:
