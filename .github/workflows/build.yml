@@ -1,24 +1,24 @@
 on:
   push:
-    paths-ignore:
-      - '.vscode/**'
-      - '.editorconfig'
-      - '.gitattributes'
-      - '.gitignore'
-      - 'docs/**'
-      - 'LICENSE'
+    paths:
+      - '.github/workflows/build.yml'
+      - 'libs/**'
+      - 'Mason*/**'
+      - 'media/**'
+      - 'submodules/**'
+      - 'thunderstore/**'
+      - 'nuget.config'
       - 'README.md'
-      - 'Mason.sln.DotSettings'
   pull_request:
-    paths-ignore:
-      - '.vscode/**'
-      - '.editorconfig'
-      - '.gitattributes'
-      - '.gitignore'
-      - 'docs/**'
-      - 'LICENSE'
+    paths:
+      - '.github/workflows/build.yml'
+      - 'libs/**'
+      - 'Mason*/**'
+      - 'media/**'
+      - 'submodules/**'
+      - 'thunderstore/**'
+      - 'nuget.config'
       - 'README.md'
-      - 'Mason.sln.DotSettings'
 
 jobs:
   build:
