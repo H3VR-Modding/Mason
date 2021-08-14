@@ -1,0 +1,6 @@
+graph TD
+	Start(Mason starts) --> ParseProject
+    ParseProject[Parse project] --> ConvertToIR
+    ConvertToIR["Convert project to intermediate representation (IR)"] --> EmitPlugin
+    EmitPlugin[Emit plugin] --> End
+	End(Mason finished)

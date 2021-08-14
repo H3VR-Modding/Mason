@@ -2,12 +2,12 @@
 
 [![releases](https://img.shields.io/github/v/release/H3VR-Modding/Mason)](https://github.com/H3VR-Modding/Mason/releases) [![nuget](https://img.shields.io/nuget/v/mason)](https://www.nuget.org/packages/mason) [![chat](https://img.shields.io/discord/777351065950879744?label=chat&logo=discord&logoColor=white)](https://discord.com/invite/g8xeFyt42j)
 
-Mason is a compiler that compiles project directories into [BepInEx](https://github.com/BepInEx/BepInEx) plugins that utilize [Stratum](https://github.com/H3VR-Modding/Stratum) asset loading.  
+Mason is a compiler that compiles project directories into [BepInEx](https://github.com/BepInEx/BepInEx) plugins that utilize [Stratum](https://github.com/H3VR-Modding/Stratum) asset loading, referred to as Stratum plugins.  
 This is a tool intended to be used solely by creators, not users. Please do not include this as a dependency in your Thunderstore package.
 
 ## Documentation
 
-Documentation can be found on [our website](https://h3vr-modding.github.io/Mason).
+Still confused what Mason is, or want to learn how to use it? Documentation can be found on [our website](https://h3vr-modding.github.io/Mason).
 
 ## Versioning
 
