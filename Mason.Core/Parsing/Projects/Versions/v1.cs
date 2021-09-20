@@ -95,7 +95,7 @@ namespace Mason.Core.Parsing.Projects
 
 				Marked<PackageComponentString> name = _project.Manifest.Name;
 				if (split[1] != name.Value)
-					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath, Messages.DiscrepantAuthor, split[0], name));
+					throw new CompilerException(MarkupMessage.Path(_project.ManifestPath, Messages.DiscrepantAuthor, split[0], name.Value));
 
 				if (PackageComponentString.TryParse(split[0]) is not { } author)
 					throw new CompilerException(MarkupMessage.Path(_project.Directory, Messages.InferredAuthorInvalid));
