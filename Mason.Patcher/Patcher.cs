@@ -11,6 +11,9 @@ namespace Mason.Patcher
 {
 	public class Patcher
 	{
+		private const string BootstrapName = "bootstrap.dll";
+		private const string OldBootstrapName = BootstrapName + ".old";
+
 		private readonly Compiler _compiler;
 		private readonly ManualLogSource _logger;
 
@@ -48,6 +51,12 @@ namespace Mason.Patcher
 			void ErrorMarkup(MarkupMessage markup, string? name = null)
 			{
 				Error(markup.ToString("error", Path.GetFullPath), name);
+			}
+
+			if (File.Exists(Path.Combine(directory, OldBootstrapName)))
+			{
+				_logger.LogDebug($"Ignoring {GetDirectoryName()} because an old (disabled) bootstrap is present.");
+				return;
 			}
 
 			CompilerOutput output;
@@ -103,7 +112,7 @@ namespace Mason.Patcher
 
 			_logger.LogInfo($"Compiled {output.Package} with {count} warnings");
 
-			using FileStream file = File.Create(Path.Combine(directory, "bootstrap.dll"));
+			using FileStream file = File.Create(Path.Combine(directory, BootstrapName));
 			_logger.LogDebug("Acquired output file");
 
 			output.Bootstrap.CopyTo(file);
