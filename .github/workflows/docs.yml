@@ -19,11 +19,11 @@ jobs:
         with:
           mdbook-version: '0.4.12'
 
-      - run: mdbook build
+      - run: mdbook build docs
 
       - name: Push to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: book
+          publish_dir: docs/book
           force_orphan: true
