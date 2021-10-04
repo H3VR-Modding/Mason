@@ -1,8 +1,0 @@
-graph TD
-	BepInEx(BepInEx chainloader complete) --> StratumStart
-
-    StratumStart[Stratum starts] --> OrderPlugins
-	OrderPlugins[Order plugins] --> SetupStage
-    SetupStage["Setup stage (sequential; before game)"] --> RuntimeStage
-    RuntimeStage["Runtime stage (parallel; during game)"] --> StratumEnd
-	StratumEnd(Stratum finished)

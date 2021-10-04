@@ -1,35 +1,25 @@
----
-title: Standalone Installation
----
+# Installation
 
-## Installing
+Mason can be installed as a NuGet tool or by downloading the EXE directly.
 
-### Installing with .NET SDK
+## NuGet
 
-If you develop using .NET languages (C#/F#/VB.NET), you likely have the .NET SDK installed. Installing Mason is extremely trivial in these cases. Simply run
+NuGet is the easiest, but is only available if you have the .NET SDK installed. If you don't know what that is, proceed to the direct download. For those with the SDK, use
 
 ```bash
-dotnet tool install --global Mason
+dotnet tool install --global mason
 ```
 
-to install Mason and allow it to be used in any folder (hence `global`).
-
-### Installing without .NET SDK
-
-If you do not have the .NET SDK, you can still install Mason, but it is a little more difficult.  
-
-Visit [the releases page](https://github.com/H3VR-Modding/Mason/releases) and download the standalone zip that corresponds to your operating system. Extract this zip to a directory and add this directory to your PATH. To do this on Windows, see [this wikiHow article](https://www.wikihow.com/Change-the-PATH-Environment-Variable-on-Windows).
-
-## Updating
-
-### Updating with .NET SDK
-
-Run
+to install and
 
 ```bash
-dotnet tool update --global Mason
+dotnet tool update --global mason
 ```
 
-### Updating without .NET SDK
+to update.
 
-Delete all files and folders from the directory you installed Mason to. Download the latest version of Mason, and extract that to the same directory.
+## Direct Download
+
+Direct download, while primitive, works without any additional programs. Visit [the latest release](https://github.com/H3VR-Modding/Mason/releases/latest) and download the standalone zip for your OS. Extract this to a directory, then add it to your PATH ([for Windows](https://www.wikihow.com/Change-the-PATH-Environment-Variable-on-Windows)). Adding to PATH ensures Mason can be called from anywhere on your PC.
+
+To update Mason, extract a newer release to the same folder as before. Delete all items before extracting to ensure there are no unused files.

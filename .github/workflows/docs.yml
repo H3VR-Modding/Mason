@@ -14,14 +14,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build
-        uses: nikeee/docfx-action@v1.0.0
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
         with:
-          args: docs/docfx/docfx.json
+          mdbook-version: '0.4.12'
+
+      - run: mdbook build
 
       - name: Push to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/docfx/_site
+          publish_dir: book
           force_orphan: true

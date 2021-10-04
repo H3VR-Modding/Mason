@@ -1,0 +1,6 @@
+[book]
+authors = ["Ash"]
+language = "en"
+multilingual = false
+src = "src"
+title = "The Book of Masonry"
