@@ -1,6 +1,6 @@
 # Compilation
 
-Compilation turns a Mason project into something runnable.
+Compilation turns a Mason project into something runnable. We haven't added any assets yet, but that is OK. Mason can compile an empty Stratum plugin, and that's all you need to learn on this page.
 
 ## How to Compile
 
@@ -14,11 +14,11 @@ MyProject
  └── project.yaml
 ```
 
-If not, something probably went wrong. Check your console/log for any errors from Mason. They may be global, preventing Mason from compiling any projects, or may be specific to your project, detailing what you did wrong.
+If not, something probably went wrong. Check your console/log for any errors from Mason. They may be global, thus preventing Mason from compiling any projects. They may also be specific to your project, in which case they would detail what you did wrong.
 
 ## What Each File Is
 
-Mason produces two files as a result of compilation: `bootstrap.dll` and `config.yaml`. These files serve two, very distinct purposes.
+Mason produces two files as a result of compilation: `bootstrap.dll` and `config.yaml`. These files serve two very distinct purposes.
 
 ### `bootstrap.dll`
 
@@ -26,7 +26,7 @@ Mason produces two files as a result of compilation: `bootstrap.dll` and `config
 
 ### `config.yaml`
 
-`config.yaml` is a special file intended for use by standalone Mason installations. It is detailed further in [the standalone section](../forms/standalone/README.md), but for now it can be ignored.
+`config.yaml` is a special file intended for use by standalone Mason installations. It is detailed further in [the standalone unit](../standalone/index.md), but for now it can be ignored.
 
 ## Running the Result
 

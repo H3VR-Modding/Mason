@@ -10,7 +10,7 @@ from within a project directory.
 
 Mason contains a help page, which like many other shell utilities, can be accessed via a `--help` flag:
 
-```bash
+```text
 $ mason --help
 mason 1.0.4
 Copyright (C) 2021 Stratum Team

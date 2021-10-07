@@ -6,7 +6,7 @@ Standalone Mason, being that it is its own application, has some added features 
 
 As covered in [the Getting Started article](../getting_started/packaging.md), packaging can be a bit tedious because of all the factors to consider, compared to Deli's simple "zip everything in the folder" doctrine. Also, it can be easy to forget to run Mason before packaging, causing you to package an old bootstrap file. Automatic packaging allows you to put in the same amount of effort as you did with Deli, but yield a more efficient result.
 
-The pack command, `mason pack`, first begins compilation. When Mason compiles a project, it must enumerate through each asset to find all resources that the asset references via the `path` field. For example, a project with this structure:
+The pack command, `mason pack`, first begins compilation. When Mason compiles a project, it must enumerate through each asset definition to execute the `path` glob. Mason stores the matching files/folders in a buffer. For example, a project with this structure:
 
 ```text
 MyProject
@@ -47,30 +47,19 @@ assets:
           loader: item_first_late
 ```
 
-will yield a bootstrap file with the equivalent of these assets:
+will only use the following resources:
 
-```yaml
-assets:
-  runtime:
-    sequential: true
-    nested:
-      - assets:
-        - path: data/first_gun
-          plugin: h3vr.otherloader
-          loader: item_data
-        - path: data/second_gun
-          plugin: h3vr.otherloader
-          loader: item_data
-      - assets:
-        - path: late/late_first_gun
-          plugin: h3vr.otherloader
-          loader: item_first_late
-        - path: late/late_second_gun
-          plugin: h3vr.otherloader
-          loader: item_first_late
+```text
+ .
+ ├── data
+ │   ├── first_gun
+ │   └── second_gun
+ └── late
+     ├── late_first_gun
+     └── late_second_gun
 ```
 
-The compiler relays the paths of the assets back to standalone Mason, which adds them to a Thunderstore package. The result of this example would be:
+The stored paths are then used to determine which files are added to a Thunderstore package. The result of this example would be:
 
 ```text
  .

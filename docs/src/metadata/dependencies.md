@@ -30,3 +30,8 @@ dependencies:
 ```
 
 If Wristimate is present, the plugin will load after it. I don't know why you would want to do this, but I can't think of any good examples.
+
+## Dependency Tips
+
+Good dependencies make a good plugin. Always **depend on the the lowest possible version that has your loaders**. This allows users to revert the loader plugin for whatever purpose is necessary, most notably it breaking.  
+Also, **use as few dependencies as possible**. The more dependencies, the more points of breakage in a plugin.

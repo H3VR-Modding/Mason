@@ -34,4 +34,4 @@ The most important thing to do when repackaging a delited mod is: **do not inclu
 
 Partial conversions also need to be cared for more than complete conversions. You *can* package the partially converted Deli mod with no edits, but that could as much as double the size of the package.  
 If possible, skim through the manifest file of the Deli mod and check what files/folders are still used. Deliter is not smart enough to delete them, so you must do this manually.  
-The same goes for the resources folder; using the project file as a guide, trim any excess resources. This will result in a smaller Thunderstore package. For more advanced users, [the standalone section](standalone/README.md) details automatic packaging which will do this process for you.
+The same goes for the resources folder; using the project file as a guide, trim any excess resources. This will result in a smaller Thunderstore package. For more advanced users, [the standalone section](standalone/index.md) details automatic packaging which will do this process for you.

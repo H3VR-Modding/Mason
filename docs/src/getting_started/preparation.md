@@ -1,19 +1,21 @@
 # Preparation
 
 To prepare a Mason project, first navigate to where your mods are being installed. For r2modman or Thunderstore Mod Manager users, this can be found in `Settings > Locations > Browse profile folder`.  
-Once you have arrived at the folder, navigate to `BepInEx/plugins` (you may have to run the game once for this folder to generate). Create a new directory, which will be the root of your Mason project.
+Once you have arrived at the folder, navigate to `BepInEx/plugins` (you may have to run the game once for this folder to generate). Create a new directory, which will be the root of your Mason project. Your project path should look something like `BepInEx/plugins/wip-mod`
 
 ## Populating the Project
 
-Mason projects require some files before they can be compiled. Each of the following subsections describe paths within your Mason project.
+Mason projects require some files before they can be compiled. Each of the following sections describe paths within your Mason project.
 
 ### Project File
 
-The project file contains the instructions that Mason should convert into runnable code. The project file is located at `project.yaml`, and must contain at least:
+The project file contains the instructions that Mason should convert into runnable code. The project file is located at `project.yaml`, and must contain
 
 ```yaml
 version: 1
 ```
+
+at the start.
 
 Wow! What an amazing project! In future examples, this will be omitted. However, **it is critical that you include the version field in every project file**. Failure to do so will result in the project not compiling.
 
@@ -36,3 +38,5 @@ The author field is not part of the Thunderstore specification, however it is gr
 2. Does the `ModName` of the directory match the `ModName` of the manifest?
 
 If the checks pass, it will use the `AuthorName` from the project directory.
+
+The author field must be a valid Thunderstore team name (same restrictions as a package name), so an author that does not match this will cause a failure.
